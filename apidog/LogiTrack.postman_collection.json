@@ -1,0 +1,5436 @@
+{
+  "info": {
+    "_postman_id": "0b8c4f6e-2a5d-4d3b-9f10-5a6b7c8d9e01",
+    "name": "LogiTrack",
+    "description": "Pruebas de LogiTrack (Sprint 2): config-server, security-service, courier-service y shipment-service.\n\nOrden: 00 (estado de los servicios), 01 (crea usuarios y tokens), 02 a 05 (un grupo por servicio / tema) y 06 (escenario completo de punta a punta).\n\nUsar con el entorno `LogiTrack local`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 - Infraestructura",
+      "item": [
+        {
+          "name": "Health config-server",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{config_url}}/actuator/health",
+              "host": [
+                "{{config_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Servidor de configuración centralizada (8888)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"El estado es UP\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql(\"UP\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health security-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{security_url}}/actuator/health",
+              "host": [
+                "{{security_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Servicio de usuarios y JWT (8083)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"El estado es UP\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql(\"UP\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health courier-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{courier_url}}/actuator/health",
+              "host": [
+                "{{courier_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Servicio de repartidores (8082)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"El estado es UP\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql(\"UP\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health shipment-service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{shipment_url}}/actuator/health",
+              "host": [
+                "{{shipment_url}}"
+              ],
+              "path": [
+                "actuator",
+                "health"
+              ]
+            },
+            "description": "Servicio de envíos (8081)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"El estado es UP\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql(\"UP\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Configuración de security-service (perfil prod)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{config_url}}/security-service/prod",
+              "host": [
+                "{{config_url}}"
+              ],
+              "path": [
+                "security-service",
+                "prod"
+              ]
+            },
+            "description": "El config-server entrega los `.yml` de `security-service` leídos del repositorio `logitrack-config`. Los secretos aparecen como `${VARIABLE}`, nunca en claro."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Devuelve la configuración del servicio correcto\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.name).to.eql(\"security-service\");",
+                  "    pm.expect(body.propertySources.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Configuración de courier-service (perfil prod)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{config_url}}/courier-service/prod",
+              "host": [
+                "{{config_url}}"
+              ],
+              "path": [
+                "courier-service",
+                "prod"
+              ]
+            },
+            "description": "El config-server entrega los `.yml` de `courier-service` leídos del repositorio `logitrack-config`. Los secretos aparecen como `${VARIABLE}`, nunca en claro."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Devuelve la configuración del servicio correcto\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.name).to.eql(\"courier-service\");",
+                  "    pm.expect(body.propertySources.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Configuración de shipment-service (perfil prod)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{config_url}}/shipment-service/prod",
+              "host": [
+                "{{config_url}}"
+              ],
+              "path": [
+                "shipment-service",
+                "prod"
+              ]
+            },
+            "description": "El config-server entrega los `.yml` de `shipment-service` leídos del repositorio `logitrack-config`. Los secretos aparecen como `${VARIABLE}`, nunca en claro."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Devuelve la configuración del servicio correcto\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.name).to.eql(\"shipment-service\");",
+                  "    pm.expect(body.propertySources.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Comprueba que los cuatro servicios están arriba y que el config-server entrega la configuración."
+    },
+    {
+      "name": "01 - Preparacion (correr primero)",
+      "item": [
+        {
+          "name": "1.1 Registrar ADMIN (201, o 409 si ya existe)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{security_url}}/api/v1/auth/register",
+              "host": [
+                "{{security_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{admin_username}}\",\n  \"email\": \"admin.demo@logitrack.test\",\n  \"password\": \"{{admin_password}}\",\n  \"rol\": \"ADMIN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201 o 409\", function () { pm.expect(pm.response.code).to.be.oneOf([201, 409]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.2 Login ADMIN -> tokenAdmin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{security_url}}/api/v1/auth/login",
+              "host": [
+                "{{security_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usernameOrEmail\": \"{{admin_username}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Devuelve un token JWT (3 partes)\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.token.split(\".\").length).to.eql(3);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.environment.set(\"tokenAdmin\", body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.3 Registrar CLIENTE A",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{security_url}}/api/v1/auth/register",
+              "host": [
+                "{{security_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"cliente.a\",\n  \"email\": \"cliente.a@logitrack.test\",\n  \"password\": \"cliente123\",\n  \"rol\": \"CLIENTE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201 o 409\", function () { pm.expect(pm.response.code).to.be.oneOf([201, 409]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.4 Login CLIENTE A -> tokenClienteA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{security_url}}/api/v1/auth/login",
+              "host": [
+                "{{security_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usernameOrEmail\": \"cliente.a\",\n  \"password\": \"cliente123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Devuelve un token JWT (3 partes)\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.token.split(\".\").length).to.eql(3);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.environment.set(\"tokenClienteA\", body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.5 Registrar CLIENTE B",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{security_url}}/api/v1/auth/register",
+              "host": [
+                "{{security_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"cliente.b\",\n  \"email\": \"cliente.b@logitrack.test\",\n  \"password\": \"cliente123\",\n  \"rol\": \"CLIENTE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201 o 409\", function () { pm.expect(pm.response.code).to.be.oneOf([201, 409]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.6 Login CLIENTE B -> tokenClienteB",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{security_url}}/api/v1/auth/login",
+              "host": [
+                "{{security_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usernameOrEmail\": \"cliente.b\",\n  \"password\": \"cliente123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Devuelve un token JWT (3 partes)\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.token.split(\".\").length).to.eql(3);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.environment.set(\"tokenClienteB\", body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.7 Registrar usuario REPARTIDOR (vinculado a Lucía)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{security_url}}/api/v1/auth/register",
+              "host": [
+                "{{security_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "El claim `repartidorId` del token sale de acá; courier-service guarda al repartidor, security-service solo su id.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"repartidor.lucia\",\n  \"email\": \"lucia.fernandez@logitrack.test\",\n  \"password\": \"repartidor123\",\n  \"rol\": \"REPARTIDOR\",\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201 o 409\", function () { pm.expect(pm.response.code).to.be.oneOf([201, 409]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.8 Login REPARTIDOR -> tokenRepartidor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{security_url}}/api/v1/auth/login",
+              "host": [
+                "{{security_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usernameOrEmail\": \"repartidor.lucia\",\n  \"password\": \"repartidor123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Devuelve un token JWT (3 partes)\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.token.split(\".\").length).to.eql(3);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.environment.set(\"tokenRepartidor\", body.token);"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Crea los usuarios de prueba (si ya existen, el 409 es esperado) y guarda sus tokens en el entorno. Hay que correr esta carpeta antes que las demás."
+    },
+    {
+      "name": "02 - security-service (8083)",
+      "item": [
+        {
+          "name": "Registro",
+          "item": [
+            {
+              "name": "Registrar un CLIENTE nuevo",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/register",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "register"
+                  ]
+                },
+                "description": "Alta con rol explícito. La contraseña se guarda con BCrypt (costo 12), nunca en claro.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"cliente.{{sufijo}}\",\n  \"email\": \"cliente.{{sufijo}}@logitrack.test\",\n  \"password\": \"cliente123\",\n  \"rol\": \"CLIENTE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.environment.set(\"sufijo\", String(Date.now()));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"Devuelve token, tipo Bearer y rol CLIENTE\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.token).to.be.a(\"string\");",
+                      "    pm.expect(body.type).to.eql(\"Bearer\");",
+                      "    pm.expect(body.role).to.eql(\"CLIENTE\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Registrar sin rol: queda como CLIENTE por defecto",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/register",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"defecto.{{sufijo}}\",\n  \"email\": \"defecto.{{sufijo}}@logitrack.test\",\n  \"password\": \"cliente123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.environment.set(\"sufijo\", String(Date.now()));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"El rol por defecto es CLIENTE\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.role).to.eql(\"CLIENTE\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Registrar un REPARTIDOR con repartidorId",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/register",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"repartidor.{{sufijo}}\",\n  \"email\": \"repartidor.{{sufijo}}@logitrack.test\",\n  \"password\": \"repartidor123\",\n  \"rol\": \"REPARTIDOR\",\n  \"repartidorId\": \"{{martin_id}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.environment.set(\"sufijo\", String(Date.now()));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"El rol es REPARTIDOR\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.role).to.eql(\"REPARTIDOR\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "item": [
+            {
+              "name": "Login con el nombre de usuario",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/login",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"usernameOrEmail\": \"cliente.a\",\n  \"password\": \"cliente123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Login con el email",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/login",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"usernameOrEmail\": \"cliente.a@logitrack.test\",\n  \"password\": \"cliente123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Contraseña incorrecta -> 401",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/login",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"usernameOrEmail\": \"cliente.a\",\n  \"password\": \"clave-incorrecta\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });",
+                      "pm.test(\"Título del error: Credenciales inválidas\", function () { pm.expect(pm.response.json().title).to.eql(\"Credenciales inválidas\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Usuario inexistente -> 401 (mismo mensaje)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/login",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "description": "Responde igual y tarda lo mismo que con una contraseña incorrecta, para no revelar qué cuentas existen.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"usernameOrEmail\": \"no.existe\",\n  \"password\": \"cualquier-clave\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });",
+                      "pm.test(\"Título del error: Credenciales inválidas\", function () { pm.expect(pm.response.json().title).to.eql(\"Credenciales inválidas\"); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Sesión (/me)",
+          "item": [
+            {
+              "name": "Datos del usuario del token (CLIENTE A)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenClienteA}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/me",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "me"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Devuelve el usuario cliente.a con rol CLIENTE\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.username).to.eql(\"cliente.a\");",
+                      "    pm.expect(body.rol).to.eql(\"CLIENTE\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Datos del usuario del token (ADMIN)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/me",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "me"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"El rol es ADMIN\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.rol).to.eql(\"ADMIN\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Validaciones y errores",
+          "item": [
+            {
+              "name": "Usuario ya registrado -> 409",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/register",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"{{admin_username}}\",\n  \"email\": \"otro@logitrack.test\",\n  \"password\": \"admin12345\",\n  \"rol\": \"CLIENTE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 409\", function () { pm.response.to.have.status(409); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Contraseña demasiado corta (mínimo 8) -> 400",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/register",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"corto.{{sufijo}}\",\n  \"email\": \"corto.{{sufijo}}@logitrack.test\",\n  \"password\": \"123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.environment.set(\"sufijo\", String(Date.now()));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 400\", function () { pm.response.to.have.status(400); });",
+                      "pm.test(\"Indica el campo password en invalid-params\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body[\"invalid-params\"]).to.have.property(\"password\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Email inválido -> 400",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/register",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"mail.{{sufijo}}\",\n  \"email\": \"esto-no-es-un-mail\",\n  \"password\": \"admin12345\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.environment.set(\"sufijo\", String(Date.now()));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 400\", function () { pm.response.to.have.status(400); });",
+                      "pm.test(\"Indica el campo email en invalid-params\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body[\"invalid-params\"]).to.have.property(\"email\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "REPARTIDOR sin repartidorId -> 422",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/register",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"sinid.{{sufijo}}\",\n  \"email\": \"sinid.{{sufijo}}@logitrack.test\",\n  \"password\": \"repartidor123\",\n  \"rol\": \"REPARTIDOR\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.environment.set(\"sufijo\", String(Date.now()));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 422\", function () { pm.response.to.have.status(422); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Login con body vacío -> 400",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/login",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 400\", function () { pm.response.to.have.status(400); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "/me sin token -> 401",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/me",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "me"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "/me con un token inventado -> 401",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer esto.no.es.un.jwt",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/me",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "me"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "/me con la firma del token alterada -> 401",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAlterado}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{security_url}}/api/v1/auth/me",
+                  "host": [
+                    "{{security_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "me"
+                  ]
+                },
+                "description": "Demuestra HMAC-SHA256: si se modifica el token, la firma ya no coincide y se rechaza."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Cambia un carácter de la firma del token del ADMIN: la firma HMAC deja de coincidir.",
+                      "const partes = (pm.environment.get(\"tokenAdmin\") || \"\").split(\".\");",
+                      "if (partes.length === 3) {",
+                      "    const firma = partes[2];",
+                      "    const i = 10;",
+                      "    partes[2] = firma.substring(0, i) + (firma[i] === \"A\" ? \"B\" : \"A\") + firma.substring(i + 1);",
+                      "}",
+                      "pm.environment.set(\"tokenAlterado\", partes.join(\".\"));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "description": "Usuarios, login y emisión de JWT (HS256). Contraseñas con BCrypt."
+    },
+    {
+      "name": "03 - courier-service (8082)",
+      "item": [
+        {
+          "name": "Repartidores (ADMIN)",
+          "item": [
+            {
+              "name": "Registrar un repartidor (queda ACTIVO)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"Repartidor {{sufijo}}\",\n  \"tipoVehiculo\": \"MOTO\",\n  \"email\": \"repartidor.{{sufijo}}@logitrack.test\",\n  \"telefono\": \"+54 388 400-2000\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.environment.set(\"sufijo\", String(Date.now()));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"Queda ACTIVO y devuelve su id\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.estado).to.eql(\"ACTIVO\");",
+                      "    pm.expect(body.id).to.be.a(\"string\");",
+                      "});",
+                      "const body = pm.response.json();",
+                      "pm.environment.set(\"repartidorNuevoId\", body.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Listar todos",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Es una lista con al menos un repartidor\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body).to.be.an(\"array\");",
+                      "    pm.expect(body.length).to.be.above(0);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Listar solo los ACTIVOS",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores?estado=ACTIVO",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores"
+                  ],
+                  "query": [
+                    {
+                      "key": "estado",
+                      "value": "ACTIVO"
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Todos están ACTIVOS\", function () {",
+                      "    const body = pm.response.json();",
+                      "    body.forEach(r => pm.expect(r.estado).to.eql(\"ACTIVO\"));",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Detalle del repartidor creado",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores/{{repartidorNuevoId}}",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores",
+                    "{{repartidorNuevoId}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Devuelve el repartidor pedido\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.id).to.eql(pm.environment.get(\"repartidorNuevoId\"));",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Actualizar los datos de contacto",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores/{{repartidorNuevoId}}",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores",
+                    "{{repartidorNuevoId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"Nombre actualizado\",\n  \"tipoVehiculo\": \"AUTO\",\n  \"email\": \"actualizado.{{sufijo}}@logitrack.test\",\n  \"telefono\": \"+54 388 400-9999\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.environment.set(\"sufijo\", String(Date.now()));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Los datos cambiaron\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.nombre).to.eql(\"Nombre actualizado\");",
+                      "    pm.expect(body.tipoVehiculo).to.eql(\"AUTO\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Estado y disponibilidad",
+          "item": [
+            {
+              "name": "Disponibilidad de Lucía (ACTIVA) -> disponible",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores/{{lucia_id}}/disponibilidad",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores",
+                    "{{lucia_id}}",
+                    "disponibilidad"
+                  ]
+                },
+                "description": "Es el endpoint que shipment-service consulta con OpenFeign antes de asignar un repartidor."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"disponible = true\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.disponible).to.eql(true);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Disponibilidad de Sofía (INACTIVA) -> no disponible",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores/{{sofia_id}}/disponibilidad",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores",
+                    "{{sofia_id}}",
+                    "disponibilidad"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"disponible = false\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.disponible).to.eql(false);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Desactivar el repartidor creado",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores/{{repartidorNuevoId}}/estado",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores",
+                    "{{repartidorNuevoId}}",
+                    "estado"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"INACTIVO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Queda INACTIVO\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.estado).to.eql(\"INACTIVO\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Ahora su disponibilidad es false",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores/{{repartidorNuevoId}}/disponibilidad",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores",
+                    "{{repartidorNuevoId}}",
+                    "disponibilidad"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"disponible = false\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.disponible).to.eql(false);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Reactivar el repartidor",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores/{{repartidorNuevoId}}/estado",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores",
+                    "{{repartidorNuevoId}}",
+                    "estado"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"ACTIVO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Queda ACTIVO\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.estado).to.eql(\"ACTIVO\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Y vuelve a estar disponible",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores/{{repartidorNuevoId}}/disponibilidad",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores",
+                    "{{repartidorNuevoId}}",
+                    "disponibilidad"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"disponible = true\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.disponible).to.eql(true);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Permisos y errores",
+          "item": [
+            {
+              "name": "Un CLIENTE no puede registrar repartidores -> 403",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenClienteA}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"Repartidor {{sufijo}}\",\n  \"tipoVehiculo\": \"MOTO\",\n  \"email\": \"repartidor.{{sufijo}}@logitrack.test\",\n  \"telefono\": \"+54 388 400-2000\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.environment.set(\"sufijo\", String(Date.now()));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 403\", function () { pm.response.to.have.status(403); });",
+                      "pm.test(\"Título del error: Acceso denegado\", function () { pm.expect(pm.response.json().title).to.eql(\"Acceso denegado\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Un REPARTIDOR no puede cambiar estados -> 403",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenRepartidor}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores/{{lucia_id}}/estado",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores",
+                    "{{lucia_id}}",
+                    "estado"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"INACTIVO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 403\", function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Repartidor inexistente -> 404",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores/00000000-0000-0000-0000-000000000000",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores",
+                    "00000000-0000-0000-0000-000000000000"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 404\", function () { pm.response.to.have.status(404); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Disponibilidad de un repartidor inexistente -> 404",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores/00000000-0000-0000-0000-000000000000/disponibilidad",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores",
+                    "00000000-0000-0000-0000-000000000000",
+                    "disponibilidad"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 404\", function () { pm.response.to.have.status(404); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Body inválido -> 400",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"\",\n  \"email\": \"no-es-un-mail\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 400\", function () { pm.response.to.have.status(400); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Sin token -> 401",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });",
+                      "pm.test(\"Título del error: No autorizado\", function () { pm.expect(pm.response.json().title).to.eql(\"No autorizado\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Token con la firma alterada -> 401",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAlterado}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{courier_url}}/api/v1/repartidores",
+                  "host": [
+                    "{{courier_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Cambia un carácter de la firma del token del ADMIN: la firma HMAC deja de coincidir.",
+                      "const partes = (pm.environment.get(\"tokenAdmin\") || \"\").split(\".\");",
+                      "if (partes.length === 3) {",
+                      "    const firma = partes[2];",
+                      "    const i = 10;",
+                      "    partes[2] = firma.substring(0, i) + (firma[i] === \"A\" ? \"B\" : \"A\") + firma.substring(i + 1);",
+                      "}",
+                      "pm.environment.set(\"tokenAlterado\", partes.join(\".\"));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "description": "Gestión de repartidores. Altas y cambios de estado son solo de ADMIN; las consultas, de cualquier usuario autenticado."
+    },
+    {
+      "name": "04 - shipment-service (8081)",
+      "item": [
+        {
+          "name": "Ciclo de vida de un envio",
+          "item": [
+            {
+              "name": "1. Registrar un envío (busca o crea al cliente por email)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                },
+                "description": "Calcula la tarifa y deja el envío PENDIENTE. Guarda `envioId` y `codigo` para los pasos siguientes.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"origenCalle\": \"Belgrano\",\n  \"origenNumero\": \"450\",\n  \"origenCiudad\": \"San Salvador de Jujuy\",\n  \"origenCodigoPostal\": \"4600\",\n  \"destinoCalle\": \"Av. Fascio\",\n  \"destinoNumero\": \"1200\",\n  \"destinoCiudad\": \"San Salvador de Jujuy\",\n  \"destinoCodigoPostal\": \"4600\",\n  \"peso\": 2.5,\n  \"ancho\": 30,\n  \"alto\": 20,\n  \"largo\": 10,\n  \"cliente\": {\n    \"nombre\": \"Tienda Norte SRL\",\n    \"email\": \"ventas@tiendanorte.com\",\n    \"telefono\": \"+54 388 400-1000\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"Queda PENDIENTE con código de seguimiento y tarifa\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.estado).to.eql(\"PENDIENTE\");",
+                      "    pm.expect(body.codigoSeguimiento).to.be.a(\"string\");",
+                      "    pm.expect(Number(body.tarifa)).to.be.above(0);",
+                      "});",
+                      "const body = pm.response.json();",
+                      "pm.environment.set(\"envioId\", body.id);",
+                      "pm.environment.set(\"codigo\", body.codigoSeguimiento);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "2. Consultar por id",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioId}}",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioId}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Es el envío pedido\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.id).to.eql(pm.environment.get(\"envioId\"));",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "3. Consultar por código de seguimiento",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/seguimiento/{{codigo}}",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "seguimiento",
+                    "{{codigo}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Devuelve el mismo envío\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.codigoSeguimiento).to.eql(pm.environment.get(\"codigo\"));",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "4. Listar por estado PENDIENTE",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios?estado=PENDIENTE",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ],
+                  "query": [
+                    {
+                      "key": "estado",
+                      "value": "PENDIENTE"
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Todos están PENDIENTES\", function () {",
+                      "    const body = pm.response.json();",
+                      "    body.forEach(e => pm.expect(e.estado).to.eql(\"PENDIENTE\"));",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "5. Pasar a EN_RUTA sin repartidor -> 422",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioId}}/estado",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioId}}",
+                    "estado"
+                  ]
+                },
+                "description": "Regla de negocio: un envío necesita repartidor antes de salir.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"EN_RUTA\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 422\", function () { pm.response.to.have.status(422); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "6. Asignar a Lucía (consulta a courier-service con OpenFeign)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioId}}/repartidor",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioId}}",
+                    "repartidor"
+                  ]
+                },
+                "description": "shipment-service llama a `GET /repartidores/{id}/disponibilidad` de courier-service y solo asigna si está disponible.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Devuelve la asignación\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.repartidorId).to.eql(pm.environment.get(\"lucia_id\"));",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "7. Pasar a EN_RUTA",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioId}}/estado",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioId}}",
+                    "estado"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"EN_RUTA\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Queda EN_RUTA\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.estado).to.eql(\"EN_RUTA\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "8. Cancelar un envío EN_RUTA -> 422",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioId}}/cancelacion",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioId}}",
+                    "cancelacion"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 422\", function () { pm.response.to.have.status(422); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "9. Transición inválida EN_RUTA -> PENDIENTE -> 422",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioId}}/estado",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioId}}",
+                    "estado"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"PENDIENTE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 422\", function () { pm.response.to.have.status(422); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "10. Entregar",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioId}}/estado",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioId}}",
+                    "estado"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"ENTREGADO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Queda ENTREGADO\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.estado).to.eql(\"ENTREGADO\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "11. Historial de auditoría (el más nuevo primero)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioId}}/historial",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioId}}",
+                    "historial"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Registra creación, salida y entrega\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.length).to.be.at.least(3);",
+                      "    pm.expect(body[0].estadoNuevo).to.eql(\"ENTREGADO\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "12. Hoja de ruta de Lucía (filtros combinados)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios?repartidorId={{lucia_id}}&estado=ENTREGADO",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ],
+                  "query": [
+                    {
+                      "key": "repartidorId",
+                      "value": "{{lucia_id}}"
+                    },
+                    {
+                      "key": "estado",
+                      "value": "ENTREGADO"
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Todos los envíos son de Lucía\", function () {",
+                      "    const body = pm.response.json();",
+                      "    body.forEach(e => pm.expect(e.repartidorId).to.eql(pm.environment.get(\"lucia_id\")));",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "13. Registrar otro envío para cancelarlo",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"origenCalle\": \"Belgrano\",\n  \"origenNumero\": \"450\",\n  \"origenCiudad\": \"San Salvador de Jujuy\",\n  \"origenCodigoPostal\": \"4600\",\n  \"destinoCalle\": \"Av. Fascio\",\n  \"destinoNumero\": \"1200\",\n  \"destinoCiudad\": \"San Salvador de Jujuy\",\n  \"destinoCodigoPostal\": \"4600\",\n  \"peso\": 2.5,\n  \"ancho\": 30,\n  \"alto\": 20,\n  \"largo\": 10,\n  \"cliente\": {\n    \"nombre\": \"Tienda Norte SRL\",\n    \"email\": \"ventas@tiendanorte.com\",\n    \"telefono\": \"+54 388 400-1000\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"Queda PENDIENTE con código de seguimiento y tarifa\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.estado).to.eql(\"PENDIENTE\");",
+                      "    pm.expect(body.codigoSeguimiento).to.be.a(\"string\");",
+                      "    pm.expect(Number(body.tarifa)).to.be.above(0);",
+                      "});",
+                      "const body = pm.response.json();",
+                      "pm.environment.set(\"envioCancelarId\", body.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "14. Cancelar un envío PENDIENTE",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioCancelarId}}/cancelacion",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioCancelarId}}",
+                    "cancelacion"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Queda CANCELADO\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.estado).to.eql(\"CANCELADO\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "description": "Un envío completo de principio a fin. Correr los pasos en orden."
+        },
+        {
+          "name": "Asignacion de repartidores (OpenFeign)",
+          "item": [
+            {
+              "name": "0. Registrar un envío PENDIENTE para asignar",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"origenCalle\": \"Belgrano\",\n  \"origenNumero\": \"450\",\n  \"origenCiudad\": \"San Salvador de Jujuy\",\n  \"origenCodigoPostal\": \"4600\",\n  \"destinoCalle\": \"Av. Fascio\",\n  \"destinoNumero\": \"1200\",\n  \"destinoCiudad\": \"San Salvador de Jujuy\",\n  \"destinoCodigoPostal\": \"4600\",\n  \"peso\": 2.5,\n  \"ancho\": 30,\n  \"alto\": 20,\n  \"largo\": 10,\n  \"cliente\": {\n    \"nombre\": \"Tienda Norte SRL\",\n    \"email\": \"ventas@tiendanorte.com\",\n    \"telefono\": \"+54 388 400-1000\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"Queda PENDIENTE con código de seguimiento y tarifa\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.estado).to.eql(\"PENDIENTE\");",
+                      "    pm.expect(body.codigoSeguimiento).to.be.a(\"string\");",
+                      "    pm.expect(Number(body.tarifa)).to.be.above(0);",
+                      "});",
+                      "const body = pm.response.json();",
+                      "pm.environment.set(\"envioAsignarId\", body.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "1. Asignar un repartidor ACTIVO (Lucía) -> 200",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioAsignarId}}/repartidor",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioAsignarId}}",
+                    "repartidor"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "2. Reasignar a otro ACTIVO (Martín) -> 200",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioAsignarId}}/repartidor",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioAsignarId}}",
+                    "repartidor"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"repartidorId\": \"{{martin_id}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Queda asignado a Martín\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.repartidorId).to.eql(pm.environment.get(\"martin_id\"));",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "3. Repartidor INACTIVO (Sofía) -> 422, lo informa courier-service",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioAsignarId}}/repartidor",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioAsignarId}}",
+                    "repartidor"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"repartidorId\": \"{{sofia_id}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 422\", function () { pm.response.to.have.status(422); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "4. Envío que ya está EN_RUTA (dato de ejemplo) -> 422",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envio_en_ruta_seed}}/repartidor",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envio_en_ruta_seed}}",
+                    "repartidor"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"repartidorId\": \"{{martin_id}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 422\", function () { pm.response.to.have.status(422); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "5. Envío CANCELADO (dato de ejemplo) -> 422",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envio_cancelado_seed}}/repartidor",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envio_cancelado_seed}}",
+                    "repartidor"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 422\", function () { pm.response.to.have.status(422); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "6. Envío inexistente -> 404",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/00000000-0000-0000-0000-000000000000/repartidor",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "00000000-0000-0000-0000-000000000000",
+                    "repartidor"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 404\", function () { pm.response.to.have.status(404); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "7. Repartidor que courier-service no conoce -> 404",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioAsignarId}}/repartidor",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioAsignarId}}",
+                    "repartidor"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"repartidorId\": \"00000000-0000-0000-0000-000000000000\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 404\", function () { pm.response.to.have.status(404); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "description": "Muestra la comunicación entre servicios: cada request dispara una consulta de disponibilidad a courier-service."
+        },
+        {
+          "name": "Manual - courier-service caido",
+          "item": [
+            {
+              "name": "Asignar con courier-service detenido -> 503",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioAsignarId}}/repartidor",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioAsignarId}}",
+                    "repartidor"
+                  ]
+                },
+                "description": "**Correr solo con courier-service detenido** (`docker compose stop courier-service`) y después levantarlo (`docker compose start courier-service`). Muestra el manejo de errores de OpenFeign: 503 y no 500.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 503\", function () { pm.response.to.have.status(503); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "description": "No incluir en la corrida automática: necesita detener un servicio."
+        },
+        {
+          "name": "Permisos y errores",
+          "item": [
+            {
+              "name": "Body inválido -> 400",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"origenCalle\": \"\",\n  \"peso\": -1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 400\", function () { pm.response.to.have.status(400); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Envío inexistente -> 404",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/00000000-0000-0000-0000-000000000000",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "00000000-0000-0000-0000-000000000000"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 404\", function () { pm.response.to.have.status(404); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Un REPARTIDOR no puede crear envíos -> 403",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenRepartidor}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"origenCalle\": \"Belgrano\",\n  \"origenNumero\": \"450\",\n  \"origenCiudad\": \"San Salvador de Jujuy\",\n  \"origenCodigoPostal\": \"4600\",\n  \"destinoCalle\": \"Av. Fascio\",\n  \"destinoNumero\": \"1200\",\n  \"destinoCiudad\": \"San Salvador de Jujuy\",\n  \"destinoCodigoPostal\": \"4600\",\n  \"peso\": 2.5,\n  \"ancho\": 30,\n  \"alto\": 20,\n  \"largo\": 10,\n  \"cliente\": {\n    \"nombre\": \"Tienda Norte SRL\",\n    \"email\": \"ventas@tiendanorte.com\",\n    \"telefono\": \"+54 388 400-1000\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 403\", function () { pm.response.to.have.status(403); });",
+                      "pm.test(\"Título del error: Acceso denegado\", function () { pm.expect(pm.response.json().title).to.eql(\"Acceso denegado\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Sin token -> 401",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });",
+                      "pm.test(\"Título del error: No autorizado\", function () { pm.expect(pm.response.json().title).to.eql(\"No autorizado\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Token con la firma alterada -> 401",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAlterado}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Cambia un carácter de la firma del token del ADMIN: la firma HMAC deja de coincidir.",
+                      "const partes = (pm.environment.get(\"tokenAdmin\") || \"\").split(\".\");",
+                      "if (partes.length === 3) {",
+                      "    const firma = partes[2];",
+                      "    const i = 10;",
+                      "    partes[2] = firma.substring(0, i) + (firma[i] === \"A\" ? \"B\" : \"A\") + firma.substring(i + 1);",
+                      "}",
+                      "pm.environment.set(\"tokenAlterado\", partes.join(\".\"));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "description": "Envíos: ciclo de vida, historial y asignación de repartidores (comunicación con courier-service)."
+    },
+    {
+      "name": "05 - Cliente y pertenencia",
+      "item": [
+        {
+          "name": "Cliente",
+          "item": [
+            {
+              "name": "1. A registra su envío",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenClienteA}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                },
+                "description": "El cliente queda vinculado al usuario del token.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"origenCalle\": \"Belgrano\",\n  \"origenNumero\": \"450\",\n  \"origenCiudad\": \"San Salvador de Jujuy\",\n  \"origenCodigoPostal\": \"4600\",\n  \"destinoCalle\": \"Av. Fascio\",\n  \"destinoNumero\": \"1200\",\n  \"destinoCiudad\": \"San Salvador de Jujuy\",\n  \"destinoCodigoPostal\": \"4600\",\n  \"peso\": 2.5,\n  \"ancho\": 30,\n  \"alto\": 20,\n  \"largo\": 10,\n  \"cliente\": {\n    \"nombre\": \"Cliente A\",\n    \"email\": \"cliente.a@logitrack.test\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                      "const body = pm.response.json();",
+                      "pm.environment.set(\"envioA\", body.id);",
+                      "pm.environment.set(\"clienteIdA\", body.clienteId);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "2. B registra su envío",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenClienteB}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"origenCalle\": \"Belgrano\",\n  \"origenNumero\": \"450\",\n  \"origenCiudad\": \"San Salvador de Jujuy\",\n  \"origenCodigoPostal\": \"4600\",\n  \"destinoCalle\": \"Av. Fascio\",\n  \"destinoNumero\": \"1200\",\n  \"destinoCiudad\": \"San Salvador de Jujuy\",\n  \"destinoCodigoPostal\": \"4600\",\n  \"peso\": 1.2,\n  \"ancho\": 30,\n  \"alto\": 20,\n  \"largo\": 10,\n  \"cliente\": {\n    \"nombre\": \"Cliente B\",\n    \"email\": \"cliente.b@logitrack.test\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                      "const body = pm.response.json();",
+                      "pm.environment.set(\"envioB\", body.id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "3. A consulta su propio envío -> 200",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenClienteA}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioA}}",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioA}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "4. A lista: solo ve los suyos -> 200",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenClienteA}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Todos pertenecen a A\", function () {",
+                      "    const body = pm.response.json();",
+                      "    body.forEach(e => pm.expect(e.clienteId).to.eql(pm.environment.get(\"clienteIdA\")));",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "5. B consulta el envío de A -> 403",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenClienteB}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioA}}",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioA}}"
+                  ]
+                },
+                "description": "Autorización por pertenencia: un cliente no ve lo de otro."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 403\", function () { pm.response.to.have.status(403); });",
+                      "pm.test(\"Título del error: Acceso denegado\", function () { pm.expect(pm.response.json().title).to.eql(\"Acceso denegado\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "6. B intenta cancelar el envío de A -> 403",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenClienteB}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioA}}/cancelacion",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioA}}",
+                    "cancelacion"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 403\", function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "7. B intenta registrar un envío a nombre del cliente de A -> 403",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenClienteB}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"origenCalle\": \"Belgrano\",\n  \"origenNumero\": \"450\",\n  \"origenCiudad\": \"San Salvador de Jujuy\",\n  \"origenCodigoPostal\": \"4600\",\n  \"destinoCalle\": \"Av. Fascio\",\n  \"destinoNumero\": \"1200\",\n  \"destinoCiudad\": \"San Salvador de Jujuy\",\n  \"destinoCodigoPostal\": \"4600\",\n  \"peso\": 1.0,\n  \"ancho\": 30,\n  \"alto\": 20,\n  \"largo\": 10,\n  \"clienteId\": \"{{clienteIdA}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 403\", function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "8. A cancela su propio envío -> 200",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenClienteA}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioA}}/cancelacion",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioA}}",
+                    "cancelacion"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Queda CANCELADO\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.estado).to.eql(\"CANCELADO\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "description": "Cada cliente solo ve y cancela lo suyo."
+        },
+        {
+          "name": "Repartidor",
+          "item": [
+            {
+              "name": "1. El ADMIN asigna a Lucía el envío de B -> 200",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioB}}/repartidor",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioB}}",
+                    "repartidor"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "2. Lucía ve el envío asignado -> 200",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenRepartidor}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioB}}",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioB}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "3. Lucía lista: solo su hoja de ruta -> 200",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenRepartidor}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Todos están asignados a Lucía\", function () {",
+                      "    const body = pm.response.json();",
+                      "    body.forEach(e => pm.expect(e.repartidorId).to.eql(pm.environment.get(\"lucia_id\")));",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "4. Lucía pide la hoja de ruta de otro repartidor -> 403",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenRepartidor}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios?repartidorId={{martin_id}}",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ],
+                  "query": [
+                    {
+                      "key": "repartidorId",
+                      "value": "{{martin_id}}"
+                    }
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 403\", function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "5. Lucía pasa su envío a EN_RUTA -> 200",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenRepartidor}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioB}}/estado",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioB}}",
+                    "estado"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"EN_RUTA\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "6. Un REPARTIDOR no puede cancelar -> 403",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenRepartidor}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioB}}/cancelacion",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioB}}",
+                    "cancelacion"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 403\", function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "7. Lucía intenta cambiar un envío que no es suyo -> 403",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenRepartidor}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioA}}/estado",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioA}}",
+                    "estado"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"EN_RUTA\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 403\", function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "description": "El repartidor solo ve y actualiza lo que tiene asignado."
+        },
+        {
+          "name": "ADMIN",
+          "item": [
+            {
+              "name": "1. Consulta cualquier envío -> 200",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioB}}",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioB}}"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "2. Ve el historial de cualquier envío -> 200",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios/{{envioB}}/historial",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios",
+                    "{{envioB}}",
+                    "historial"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "3. Lista todo, sin recorte por pertenencia -> 200",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Ve más de un envío\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.length).to.be.at.least(2);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "description": "El ADMIN mantiene acceso total."
+        },
+        {
+          "name": "Sin credenciales",
+          "item": [
+            {
+              "name": "Sin token -> 401",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{shipment_url}}/api/v1/envios",
+                  "host": [
+                    "{{shipment_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "description": "Autorización por pertenencia (S2-07): cada usuario solo accede a lo que es suyo."
+    },
+    {
+      "name": "06 - Escenario E2E (demo completa)",
+      "item": [
+        {
+          "name": "E0. Login ADMIN (el usuario se crea una sola vez en 01 - Preparacion)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{security_url}}/api/v1/auth/login",
+              "host": [
+                "{{security_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usernameOrEmail\": \"{{admin_username}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Devuelve un token JWT (3 partes)\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.token.split(\".\").length).to.eql(3);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.environment.set(\"tokenAdmin\", body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E1. Registrar un CLIENTE nuevo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{security_url}}/api/v1/auth/register",
+              "host": [
+                "{{security_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"cliente.e2e.{{sufijo}}\",\n  \"email\": \"cliente.e2e.{{sufijo}}@logitrack.test\",\n  \"password\": \"cliente123\",\n  \"rol\": \"CLIENTE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set(\"sufijo\", String(Date.now()));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.environment.set(\"tokenE2ECliente\", body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E1b. Registrar un segundo CLIENTE (para probar la pertenencia)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{security_url}}/api/v1/auth/register",
+              "host": [
+                "{{security_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"otro.e2e.{{sufijo}}\",\n  \"email\": \"otro.e2e.{{sufijo}}@logitrack.test\",\n  \"password\": \"cliente123\",\n  \"rol\": \"CLIENTE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.environment.set(\"tokenE2EOtro\", body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E2. El ADMIN crea un repartidor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{courier_url}}/api/v1/repartidores",
+              "host": [
+                "{{courier_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "repartidores"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Repartidor {{sufijo}}\",\n  \"tipoVehiculo\": \"MOTO\",\n  \"email\": \"repartidor.{{sufijo}}@logitrack.test\",\n  \"telefono\": \"+54 388 400-2000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.environment.set(\"repartidorE2EId\", body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E3. Registrar el usuario REPARTIDOR vinculado a ese repartidor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{security_url}}/api/v1/auth/register",
+              "host": [
+                "{{security_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"repartidor.e2e.{{sufijo}}\",\n  \"email\": \"repartidor.e2e.{{sufijo}}@logitrack.test\",\n  \"password\": \"repartidor123\",\n  \"rol\": \"REPARTIDOR\",\n  \"repartidorId\": \"{{repartidorE2EId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.environment.set(\"tokenE2ERepartidor\", body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E4. El cliente registra un envío",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenE2ECliente}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{shipment_url}}/api/v1/envios",
+              "host": [
+                "{{shipment_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "envios"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"origenCalle\": \"Belgrano\",\n  \"origenNumero\": \"450\",\n  \"origenCiudad\": \"San Salvador de Jujuy\",\n  \"origenCodigoPostal\": \"4600\",\n  \"destinoCalle\": \"Av. Fascio\",\n  \"destinoNumero\": \"1200\",\n  \"destinoCiudad\": \"San Salvador de Jujuy\",\n  \"destinoCodigoPostal\": \"4600\",\n  \"peso\": 2.5,\n  \"ancho\": 30,\n  \"alto\": 20,\n  \"largo\": 10,\n  \"cliente\": {\n    \"nombre\": \"Cliente E2E\",\n    \"email\": \"cliente.e2e.{{sufijo}}@logitrack.test\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Queda PENDIENTE\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.estado).to.eql(\"PENDIENTE\");",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.environment.set(\"envioE2EId\", body.id);",
+                  "pm.environment.set(\"codigoE2E\", body.codigoSeguimiento);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E5. El cliente lo consulta por código de seguimiento",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenE2ECliente}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{shipment_url}}/api/v1/envios/seguimiento/{{codigoE2E}}",
+              "host": [
+                "{{shipment_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "envios",
+                "seguimiento",
+                "{{codigoE2E}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E6. Salir sin repartidor -> 422",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{shipment_url}}/api/v1/envios/{{envioE2EId}}/estado",
+              "host": [
+                "{{shipment_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "envios",
+                "{{envioE2EId}}",
+                "estado"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"EN_RUTA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E7. El ADMIN asigna el repartidor (shipment consulta a courier por OpenFeign) -> 200",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{shipment_url}}/api/v1/envios/{{envioE2EId}}/repartidor",
+              "host": [
+                "{{shipment_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "envios",
+                "{{envioE2EId}}",
+                "repartidor"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"repartidorId\": \"{{repartidorE2EId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Queda asignado al repartidor creado\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.repartidorId).to.eql(pm.environment.get(\"repartidorE2EId\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E8. Verificar en courier-service que el repartidor está disponible",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{courier_url}}/api/v1/repartidores/{{repartidorE2EId}}/disponibilidad",
+              "host": [
+                "{{courier_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "repartidores",
+                "{{repartidorE2EId}}",
+                "disponibilidad"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"disponible = true\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.disponible).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E9. El repartidor ve su hoja de ruta",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenE2ERepartidor}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{shipment_url}}/api/v1/envios",
+              "host": [
+                "{{shipment_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "envios"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Incluye el envío asignado\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.map(e => e.id)).to.include(pm.environment.get(\"envioE2EId\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E10. El repartidor pasa el envío a EN_RUTA",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenE2ERepartidor}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{shipment_url}}/api/v1/envios/{{envioE2EId}}/estado",
+              "host": [
+                "{{shipment_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "envios",
+                "{{envioE2EId}}",
+                "estado"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"EN_RUTA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E11. El cliente intenta cancelar un envío EN_RUTA -> 422",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenE2ECliente}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{shipment_url}}/api/v1/envios/{{envioE2EId}}/cancelacion",
+              "host": [
+                "{{shipment_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "envios",
+                "{{envioE2EId}}",
+                "cancelacion"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 422\", function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E12. Otro cliente intenta ver el envío -> 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenE2EOtro}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{shipment_url}}/api/v1/envios/{{envioE2EId}}",
+              "host": [
+                "{{shipment_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "envios",
+                "{{envioE2EId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 403\", function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E13. El repartidor entrega el envío",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenE2ERepartidor}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{shipment_url}}/api/v1/envios/{{envioE2EId}}/estado",
+              "host": [
+                "{{shipment_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "envios",
+                "{{envioE2EId}}",
+                "estado"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"ENTREGADO\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Queda ENTREGADO\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.estado).to.eql(\"ENTREGADO\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E14. El cliente consulta el historial completo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenE2ECliente}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{shipment_url}}/api/v1/envios/{{envioE2EId}}/historial",
+              "host": [
+                "{{shipment_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "envios",
+                "{{envioE2EId}}",
+                "historial"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Tres cambios de estado, el último es ENTREGADO\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.length).to.be.at.least(3);",
+                  "    pm.expect(body[0].estadoNuevo).to.eql(\"ENTREGADO\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Recorrido completo y autocontenido: se puede ejecutar completo cuantas veces se quiera (usa datos nuevos en cada corrida). Ideal para el escenario de pruebas de Apidog y para la demostración."
+    }
+  ]
+}

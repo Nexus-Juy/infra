@@ -1,0 +1,150 @@
+### =====================================================================
+### courier-service (puerto 8082) - repartidores y disponibilidad
+###
+### Requiere security-service (8083) para obtener el token.
+### Los UUID de ejemplo existen en db/init/02-couriers.sql:
+###   Lucía (ACTIVA) ...01 · Martín (ACTIVO) ...02 · Sofía (INACTIVA) ...03
+### Compatible con IntelliJ HTTP Client.
+### =====================================================================
+
+@security = http://localhost:8083
+@host = http://localhost:8082
+@token = token-de-prueba
+@lucia = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e01
+@sofia = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e03
+@repartidorId = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e01
+
+### ---------------------------------------------------------------------
+### 0. AUTENTICACIÓN (correr una de las dos)
+### ---------------------------------------------------------------------
+
+### 0.1. Registro inicial de un ADMIN (la primera vez) -> 201
+POST {{security}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "admin.demo",
+  "email": "admin.demo@logitrack.test",
+  "password": "admin123",
+  "rol": "ADMIN"
+}
+
+> {%
+    client.global.set("token", response.body.token);
+    client.test("Token guardado", function () {
+        client.assert(response.status === 201, "Se esperaba 201; si dio 409 usar el request 0.2");
+    });
+%}
+
+### 0.2. Login (usar cuando el usuario ya está registrado) -> 200
+POST {{security}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "admin.demo",
+  "password": "admin123"
+}
+
+> {%
+    client.global.set("token", response.body.token);
+%}
+
+### ---------------------------------------------------------------------
+### 1. REPARTIDORES
+### ---------------------------------------------------------------------
+
+### 1.1. Registrar un repartidor (queda ACTIVO) -> 201
+POST {{host}}/api/v1/repartidores
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Juan Pérez",
+  "tipoVehiculo": "MOTO",
+  "email": "juan.perez@logitrack.test",
+  "telefono": "+54 388 400-2000"
+}
+
+### 1.2. Listar los repartidores disponibles (ACTIVO) -> 200
+GET {{host}}/api/v1/repartidores?estado=ACTIVO
+Authorization: Bearer {{token}}
+
+### 1.3. Listar todos -> 200
+GET {{host}}/api/v1/repartidores
+Authorization: Bearer {{token}}
+
+### 1.4. Detalle de un repartidor -> 200
+GET {{host}}/api/v1/repartidores/{{repartidorId}}
+Authorization: Bearer {{token}}
+
+### 1.5. Actualizar los datos de contacto -> 200
+PUT {{host}}/api/v1/repartidores/{{repartidorId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Lucía Fernández",
+  "tipoVehiculo": "MOTO",
+  "email": "lucia.fernandez@logitrack.com",
+  "telefono": "+54 388 400-9999"
+}
+
+### ---------------------------------------------------------------------
+### 2. ESTADO Y DISPONIBILIDAD
+### Es el endpoint remoto que shipment-service consulta con OpenFeign.
+### ---------------------------------------------------------------------
+
+### 2.1. Disponibilidad de Lucía (ACTIVA) -> 200 con disponible=true
+GET {{host}}/api/v1/repartidores/{{lucia}}/disponibilidad
+Authorization: Bearer {{token}}
+
+### 2.2. Disponibilidad de Sofía (INACTIVA) -> 200 con disponible=false
+GET {{host}}/api/v1/repartidores/{{sofia}}/disponibilidad
+Authorization: Bearer {{token}}
+
+### 2.3. Desactivar un repartidor -> 200
+PATCH {{host}}/api/v1/repartidores/{{repartidorId}}/estado
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "estado": "INACTIVO"
+}
+
+### 2.4. Ahora su disponibilidad es false -> 200
+GET {{host}}/api/v1/repartidores/{{repartidorId}}/disponibilidad
+Authorization: Bearer {{token}}
+
+### 2.5. Reactivarlo (dejarlo ACTIVO para los demás archivos) -> 200
+PATCH {{host}}/api/v1/repartidores/{{repartidorId}}/estado
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "estado": "ACTIVO"
+}
+
+### ---------------------------------------------------------------------
+### 3. CASOS DE ERROR
+### ---------------------------------------------------------------------
+
+### 3.1. Repartidor inexistente -> 404
+GET {{host}}/api/v1/repartidores/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{token}}
+
+### 3.2. Disponibilidad de un repartidor inexistente -> 404
+GET {{host}}/api/v1/repartidores/00000000-0000-0000-0000-000000000000/disponibilidad
+Authorization: Bearer {{token}}
+
+### 3.3. Body inválido -> 400
+POST {{host}}/api/v1/repartidores
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "",
+  "email": "no-es-un-mail"
+}
+
+### 3.4. Sin token -> 401
+GET {{host}}/api/v1/repartidores

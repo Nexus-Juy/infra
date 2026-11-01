@@ -79,8 +79,24 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml push
 - Swagger de envíos: http://localhost:8081/swagger-ui.html
 - Health: http://localhost:8081/actuator/health (también 8082, 8083 y 8888)
 - Configuración servida: http://localhost:8888/shipment-service/prod
-- Carpeta `http/`: requests listos para ejecutar desde IntelliJ (el primero registra un usuario ADMIN y guarda el
-  token para los demás).
+- Carpeta `http/`: requests listos para ejecutar desde IntelliJ, un archivo por servicio (ver abajo).
+
+### Pruebas en Apidog (`apidog/`)
+
+La carpeta `apidog/` trae una colección con más de 100 requests y sus aserciones, lista para importar en Apidog
+(o en Postman), junto con el entorno y un guion para la demostración. Ver `apidog/README.md`.
+
+### Requests de prueba (`http/`)
+
+| Archivo | Qué prueba |
+|---|---|
+| `security.http` | Registro y login de ADMIN, CLIENTES y REPARTIDOR, `/me` y errores (401, 409, 400, 422). **Correr primero.** |
+| `courier.http` | Alta, consulta y estado de repartidores, y el endpoint de disponibilidad que consume shipment-service |
+| `shipment.http` | Ciclo de vida de un envío, historial y asignación de repartidores (comunicación con courier por OpenFeign) |
+| `cliente.http` | Autorización por pertenencia: cada cliente solo ve sus envíos, el repartidor solo los asignados, el ADMIN todo |
+
+Cada archivo guarda el token en una variable global al hacer login. Orden recomendado: `security.http`,
+`courier.http`, `shipment.http` y `cliente.http`.
 
 ## Detener
 

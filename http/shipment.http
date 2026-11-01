@@ -1,0 +1,226 @@
+### =====================================================================
+### shipment-service (puerto 8081) - envíos, historial y asignación de repartidores
+###
+### Requiere security-service (8083) para el token y courier-service (8082) para asignar
+### repartidores: shipment-service le consulta la disponibilidad con OpenFeign.
+### Los envíos de ejemplo existen en db/init/01-schema.sql:
+###   ...01 PENDIENTE · ...02 PENDIENTE · ...03 EN_RUTA · ...04 ENTREGADO · ...05 CANCELADO
+### Compatible con IntelliJ HTTP Client (usa scripts para guardar el id del envío).
+### =====================================================================
+
+@security = http://localhost:8083
+@host = http://localhost:8081
+@token = token-de-prueba
+@envioId = eeeeeeee-0000-4000-8000-000000000001
+@codigo = LT-2026-000001
+@envioPendiente = eeeeeeee-0000-4000-8000-000000000001
+@lucia = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e01
+@martin = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e02
+@sofia = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e03
+
+### ---------------------------------------------------------------------
+### 0. AUTENTICACIÓN (correr una de las dos)
+### ---------------------------------------------------------------------
+
+### 0.1. Registro inicial de un ADMIN (la primera vez) -> 201
+POST {{security}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "admin.demo",
+  "email": "admin.demo@logitrack.test",
+  "password": "admin123",
+  "rol": "ADMIN"
+}
+
+> {%
+    client.global.set("token", response.body.token);
+    client.test("Token guardado", function () {
+        client.assert(response.status === 201, "Se esperaba 201; si dio 409 usar el request 0.2");
+    });
+%}
+
+### 0.2. Login (usar cuando el usuario ya está registrado) -> 200
+POST {{security}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "admin.demo",
+  "password": "admin123"
+}
+
+> {%
+    client.global.set("token", response.body.token);
+%}
+
+### ---------------------------------------------------------------------
+### 1. CICLO DE VIDA DE UN ENVÍO
+### Ejecutá primero el 1.1: guarda el id y el código que usan los siguientes.
+### ---------------------------------------------------------------------
+
+### 1.1. Registrar un envío con datos de cliente (busca o crea por email) -> 201 + Location
+POST {{host}}/api/v1/envios
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "origenCalle": "Belgrano", "origenNumero": "450",
+  "origenCiudad": "San Salvador de Jujuy", "origenCodigoPostal": "4600",
+  "destinoCalle": "Av. Fascio", "destinoNumero": "1200",
+  "destinoCiudad": "San Salvador de Jujuy", "destinoCodigoPostal": "4600",
+  "peso": 2.5, "ancho": 30, "alto": 20, "largo": 10,
+  "cliente": { "nombre": "Tienda Norte SRL", "email": "ventas@tiendanorte.com", "telefono": "+54 388 400-1000" }
+}
+
+> {%
+    client.test("Envío registrado (201)", function () {
+        client.assert(response.status === 201, "Se esperaba 201 y llegó " + response.status);
+    });
+    client.global.set("envioId", response.body.id);
+    client.global.set("codigo", response.body.codigoSeguimiento);
+%}
+
+### 1.2. Consultar por id -> 200
+GET {{host}}/api/v1/envios/{{envioId}}
+Authorization: Bearer {{token}}
+
+### 1.3. Consultar por código de seguimiento -> 200
+GET {{host}}/api/v1/envios/seguimiento/{{codigo}}
+Authorization: Bearer {{token}}
+
+### 1.4. Listar por estado -> 200
+GET {{host}}/api/v1/envios?estado=PENDIENTE
+Authorization: Bearer {{token}}
+
+### 1.5. Hoja de ruta de un repartidor (filtros combinables) -> 200
+GET {{host}}/api/v1/envios?repartidorId={{lucia}}&estado=EN_RUTA
+Authorization: Bearer {{token}}
+
+### 1.6. Pasar a EN_RUTA sin repartidor asignado -> 422
+PATCH {{host}}/api/v1/envios/{{envioId}}/estado
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "estado": "EN_RUTA" }
+
+### 1.7. Asignar un repartidor ACTIVO (Lucía, vive en courier-service) -> 200
+### Acá shipment-service llama a courier-service por OpenFeign. Si está caído, responde 503.
+PUT {{host}}/api/v1/envios/{{envioId}}/repartidor
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "repartidorId": "{{lucia}}" }
+
+### 1.8. Pasar a EN_RUTA -> 200
+PATCH {{host}}/api/v1/envios/{{envioId}}/estado
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "estado": "EN_RUTA" }
+
+### 1.9. Cancelar un envío EN_RUTA -> 422
+POST {{host}}/api/v1/envios/{{envioId}}/cancelacion
+Authorization: Bearer {{token}}
+
+### 1.10. Transición inválida EN_RUTA -> PENDIENTE -> 422
+PATCH {{host}}/api/v1/envios/{{envioId}}/estado
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "estado": "PENDIENTE" }
+
+### 1.11. Entregar -> 200
+PATCH {{host}}/api/v1/envios/{{envioId}}/estado
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "estado": "ENTREGADO" }
+
+### 1.12. Historial de auditoría (el más nuevo primero) -> 200
+GET {{host}}/api/v1/envios/{{envioId}}/historial
+Authorization: Bearer {{token}}
+
+### 1.13. Cancelar un envío PENDIENTE de los datos de ejemplo -> 200
+POST {{host}}/api/v1/envios/eeeeeeee-0000-4000-8000-000000000002/cancelacion
+Authorization: Bearer {{token}}
+
+### ---------------------------------------------------------------------
+### 2. ASIGNACIÓN DE REPARTIDORES (comunicación con courier-service)
+### Usa los envíos de ejemplo; si ya los modificaste, recrear las bases: docker compose down -v
+### ---------------------------------------------------------------------
+
+### 2.1. Asignar un repartidor ACTIVO a un envío PENDIENTE -> 200
+PUT {{host}}/api/v1/envios/{{envioPendiente}}/repartidor
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "repartidorId": "{{lucia}}" }
+
+### 2.2. Reasignar el envío PENDIENTE a otro repartidor ACTIVO -> 200
+PUT {{host}}/api/v1/envios/{{envioPendiente}}/repartidor
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "repartidorId": "{{martin}}" }
+
+### 2.3. Asignar un repartidor INACTIVO (Sofía) -> 422, lo informa courier-service
+PUT {{host}}/api/v1/envios/eeeeeeee-0000-4000-8000-000000000002/repartidor
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "repartidorId": "{{sofia}}" }
+
+### 2.4. Asignar a un envío que ya está EN_RUTA -> 422
+PUT {{host}}/api/v1/envios/eeeeeeee-0000-4000-8000-000000000003/repartidor
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "repartidorId": "{{martin}}" }
+
+### 2.5. Asignar a un envío CANCELADO -> 422
+PUT {{host}}/api/v1/envios/eeeeeeee-0000-4000-8000-000000000005/repartidor
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "repartidorId": "{{lucia}}" }
+
+### 2.6. Asignar a un envío inexistente -> 404
+PUT {{host}}/api/v1/envios/00000000-0000-0000-0000-000000000000/repartidor
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "repartidorId": "{{lucia}}" }
+
+### 2.7. Asignar un repartidor que courier-service no conoce -> 404
+PUT {{host}}/api/v1/envios/{{envioPendiente}}/repartidor
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "repartidorId": "00000000-0000-0000-0000-000000000000" }
+
+### 2.8. courier-service caído -> 503
+### Frená solo courier (docker compose stop courier-service) y corré este request.
+### Después levantalo de nuevo: docker compose start courier-service
+PUT {{host}}/api/v1/envios/{{envioPendiente}}/repartidor
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "repartidorId": "{{lucia}}" }
+
+### ---------------------------------------------------------------------
+### 3. CASOS DE ERROR
+### ---------------------------------------------------------------------
+
+### 3.1. Body inválido -> 400
+POST {{host}}/api/v1/envios
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "origenCalle": "", "peso": -1 }
+
+### 3.2. Envío inexistente -> 404
+GET {{host}}/api/v1/envios/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{token}}
+
+### 3.3. Sin token -> 401
+GET {{host}}/api/v1/envios
