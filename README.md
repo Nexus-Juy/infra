@@ -48,7 +48,7 @@ etc.). También quedan publicados el panel de Eureka (8065), el config-server (8
 
 | Variable | Qué poner |
 |---|---|
-| `DOCKERHUB_USER` / `IMAGE_TAG` | Usuario de Docker Hub y versión de las imágenes |
+| `DOCKERHUB_USER` / `IMAGE_TAG` | Usuario de Docker Hub (`macostag26`) y versión de las imágenes (`3.0.0`) |
 | `DB_USER` / `DB_PASSWORD` / `MYSQL_ROOT_PASSWORD` | Credenciales de MySQL (las que quieran) |
 | `JWT_SECRET` | Obligatoria, **mínimo 32 caracteres**. La usan security-service y el api-gateway (y los servicios). Generar con `openssl rand -base64 48` |
 | `CORS_ALLOWED_ORIGINS` | Opcional: orígenes permitidos para CORS en el gateway, separados por coma |
@@ -82,14 +82,30 @@ cd infra
 docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
+## Imágenes publicadas en Docker Hub (S3-10)
+
+La versión del Sprint 3 es la **`3.0.0`**: incluye eureka-server y api-gateway, y los servicios registrados en
+Eureka. Con el `.env` completo, `docker compose up -d` descarga estas imágenes y levanta todo sin construir
+nada. La `1.0.0` (Sprint 2) sigue publicada y no se modificó.
+
+| Imagen | Descarga |
+|---|---|
+| [`macostag26/logitrack-config-server:3.0.0`](https://hub.docker.com/r/macostag26/logitrack-config-server) | `docker pull macostag26/logitrack-config-server:3.0.0` |
+| [`macostag26/logitrack-eureka-server:3.0.0`](https://hub.docker.com/r/macostag26/logitrack-eureka-server) | `docker pull macostag26/logitrack-eureka-server:3.0.0` |
+| [`macostag26/logitrack-api-gateway:3.0.0`](https://hub.docker.com/r/macostag26/logitrack-api-gateway) | `docker pull macostag26/logitrack-api-gateway:3.0.0` |
+| [`macostag26/logitrack-security-service:3.0.0`](https://hub.docker.com/r/macostag26/logitrack-security-service) | `docker pull macostag26/logitrack-security-service:3.0.0` |
+| [`macostag26/logitrack-courier-service:3.0.0`](https://hub.docker.com/r/macostag26/logitrack-courier-service) | `docker pull macostag26/logitrack-courier-service:3.0.0` |
+| [`macostag26/logitrack-shipment-service:3.0.0`](https://hub.docker.com/r/macostag26/logitrack-shipment-service) | `docker pull macostag26/logitrack-shipment-service:3.0.0` |
+
+Los repositorios de Docker Hub son públicos: se descargan sin `docker login`.
+
 ## Publicar una versión nueva en Docker Hub
 
-Las imágenes publicadas como `1.0.0` se construyeron con el código del monorepo original. Después de cambiar
-los servicios (independencia de módulos, OpenFeign, cifrado), conviene publicar una versión nueva:
+Para publicar cambios, se construye con una etiqueta nueva (nunca se pisa una ya publicada):
 
 ```bash
 docker login
-# en .env: IMAGE_TAG=1.1.0
+# en .env: IMAGE_TAG=3.0.1 (o la que siga)
 docker compose -f docker-compose.yml -f docker-compose.build.yml build
 docker compose -f docker-compose.yml -f docker-compose.build.yml push
 ```
