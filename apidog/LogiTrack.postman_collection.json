@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "0b8c4f6e-2a5d-4d3b-9f10-5a6b7c8d9e01",
     "name": "LogiTrack",
-    "description": "Pruebas de LogiTrack (Sprint 2): config-server, security-service, courier-service y shipment-service.\n\nOrden: 00 (estado de los servicios), 01 (crea usuarios y tokens), 02 a 05 (un grupo por servicio / tema) y 06 (escenario completo de punta a punta).\n\nUsar con el entorno `LogiTrack local`.",
+    "description": "Pruebas de LogiTrack (Sprint 3): config-server, eureka-server, api-gateway, security-service, courier-service y shipment-service.\n\nTodo entra por el api-gateway (8066).\n\nOrden: 00 (infraestructura y Eureka), 01 (crea usuarios y tokens), 02 a 05 (un grupo por servicio / tema), 06 (escenario completo de punta a punta) y 07 (api-gateway).\n\nUsar con el entorno `LogiTrack local`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -44,21 +44,21 @@
           ]
         },
         {
-          "name": "Health security-service",
+          "name": "Health eureka-server",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{security_url}}/actuator/health",
+              "raw": "{{eureka_url}}/actuator/health",
               "host": [
-                "{{security_url}}"
+                "{{eureka_url}}"
               ],
               "path": [
                 "actuator",
                 "health"
               ]
             },
-            "description": "Servicio de usuarios y JWT (8083)."
+            "description": "Servidor de descubrimiento (8065)."
           },
           "response": [],
           "event": [
@@ -78,21 +78,21 @@
           ]
         },
         {
-          "name": "Health courier-service",
+          "name": "Health api-gateway",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{courier_url}}/actuator/health",
+              "raw": "{{gateway_url}}/actuator/health",
               "host": [
-                "{{courier_url}}"
+                "{{gateway_url}}"
               ],
               "path": [
                 "actuator",
                 "health"
               ]
             },
-            "description": "Servicio de repartidores (8082)."
+            "description": "Punto único de entrada (8066). Los servicios de negocio ya no se publican en el host: solo se llega a ellos por el gateway."
           },
           "response": [],
           "event": [
@@ -112,21 +112,27 @@
           ]
         },
         {
-          "name": "Health shipment-service",
+          "name": "Servicios registrados en Eureka",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
             "url": {
-              "raw": "{{shipment_url}}/actuator/health",
+              "raw": "{{eureka_url}}/eureka/apps",
               "host": [
-                "{{shipment_url}}"
+                "{{eureka_url}}"
               ],
               "path": [
-                "actuator",
-                "health"
+                "eureka",
+                "apps"
               ]
             },
-            "description": "Servicio de envíos (8081)."
+            "description": "Lista las instancias que Eureka conoce. Tienen que estar `API-GATEWAY`, `COURIER-SERVICE`, `SECURITY-SERVICE` y `SHIPMENT-SERVICE`, todas en `UP`. También se ve en el panel: http://localhost:8065"
           },
           "response": [],
           "event": [
@@ -136,9 +142,12 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
-                  "pm.test(\"El estado es UP\", function () {",
+                  "pm.test(\"Los 4 servicios están registrados y UP\", function () {",
                   "    const body = pm.response.json();",
-                  "    pm.expect(body.status).to.eql(\"UP\");",
+                  "    const apps = [].concat(body.applications.application || []);",
+                  "    const nombres = apps.map(a => a.name);",
+                  "    [\"API-GATEWAY\", \"COURIER-SERVICE\", \"SECURITY-SERVICE\", \"SHIPMENT-SERVICE\"].forEach(n => pm.expect(nombres, \"falta \" + n).to.include(n));",
+                  "    apps.forEach(a => [].concat(a.instance).forEach(i => pm.expect(i.status, a.name).to.eql(\"UP\")));",
                   "});"
                 ]
               }
@@ -249,9 +258,79 @@
               }
             }
           ]
+        },
+        {
+          "name": "Configuración de api-gateway (perfil prod)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{config_url}}/api-gateway/prod",
+              "host": [
+                "{{config_url}}"
+              ],
+              "path": [
+                "api-gateway",
+                "prod"
+              ]
+            },
+            "description": "El config-server entrega los `.yml` de `api-gateway` leídos del repositorio `logitrack-config`. Los secretos aparecen como `${VARIABLE}`, nunca en claro."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Devuelve la configuración del servicio correcto\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.name).to.eql(\"api-gateway\");",
+                  "    pm.expect(body.propertySources.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Configuración de eureka-server (perfil prod)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{config_url}}/eureka-server/prod",
+              "host": [
+                "{{config_url}}"
+              ],
+              "path": [
+                "eureka-server",
+                "prod"
+              ]
+            },
+            "description": "El config-server entrega los `.yml` de `eureka-server` leídos del repositorio `logitrack-config`. Los secretos aparecen como `${VARIABLE}`, nunca en claro."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Devuelve la configuración del servicio correcto\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.name).to.eql(\"eureka-server\");",
+                  "    pm.expect(body.propertySources.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ],
-      "description": "Comprueba que los cuatro servicios están arriba y que el config-server entrega la configuración."
+      "description": "Comprueba la infraestructura: config-server, Eureka (con los servicios registrados) y el gateway."
     },
     {
       "name": "01 - Preparacion (correr primero)",
@@ -653,7 +732,7 @@
       "description": "Crea los usuarios de prueba (si ya existen, el 409 es esperado) y guarda sus tokens en el entorno. Hay que correr esta carpeta antes que las demás."
     },
     {
-      "name": "02 - security-service (8083)",
+      "name": "02 - security-service",
       "item": [
         {
           "name": "Registro",
@@ -1516,7 +1595,7 @@
       "description": "Usuarios, login y emisión de JWT (HS256). Contraseñas con BCrypt."
     },
     {
-      "name": "03 - courier-service (8082)",
+      "name": "03 - courier-service",
       "item": [
         {
           "name": "Repartidores (ADMIN)",
@@ -2397,7 +2476,7 @@
       "description": "Gestión de repartidores. Altas y cambios de estado son solo de ADMIN; las consultas, de cualquier usuario autenticado."
     },
     {
-      "name": "04 - shipment-service (8081)",
+      "name": "04 - shipment-service",
       "item": [
         {
           "name": "Ciclo de vida de un envio",
@@ -3563,7 +3642,7 @@
                     "repartidor"
                   ]
                 },
-                "description": "**Correr solo con courier-service detenido** (`docker compose stop courier-service`) y después levantarlo (`docker compose start courier-service`). Muestra el manejo de errores de OpenFeign: 503 y no 500.",
+                "description": "**Correr solo con courier-service detenido** (`docker compose stop courier-service`) y después levantarlo (`docker compose start courier-service`). La petición entra por el gateway; shipment-service no logra consultar a courier-service y responde 503 (no 500) gracias al ErrorDecoder, el fallback y el circuit breaker.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
@@ -5431,6 +5510,928 @@
         }
       ],
       "description": "Recorrido completo y autocontenido: se puede ejecutar completo cuantas veces se quiera (usa datos nuevos en cada corrida). Ideal para el escenario de pruebas de Apidog y para la demostración."
+    },
+    {
+      "name": "07 - api-gateway (8066)",
+      "item": [
+        {
+          "name": "Rutas publicas (sin token)",
+          "item": [
+            {
+              "name": "Login por el gateway -> llega a security-service",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/auth/login",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "description": "`/api/v1/auth/**` es pública: el gateway la enruta a `lb://SECURITY-SERVICE` sin pedir token.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"usernameOrEmail\": \"{{admin_username}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Devuelve un JWT\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.token.split(\".\").length).to.eql(3);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Registro por el gateway -> 201",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/auth/register",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "register"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"gw.{{sufijo}}\",\n  \"email\": \"gw.{{sufijo}}@logitrack.test\",\n  \"password\": \"cliente123\",\n  \"rol\": \"CLIENTE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.environment.set(\"sufijo\", String(Date.now()));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Cada ruta llega a su servicio",
+          "item": [
+            {
+              "name": "/api/v1/auth/me -> security-service",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/auth/me",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "me"
+                  ]
+                },
+                "description": "Ruta `lb://SECURITY-SERVICE`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Es el ADMIN\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.rol).to.eql(\"ADMIN\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "/api/v1/repartidores -> courier-service",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/repartidores",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores"
+                  ]
+                },
+                "description": "Ruta `lb://COURIER-SERVICE`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"Es una lista\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body).to.be.an(\"array\");",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "/api/v1/envios -> shipment-service",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/envios",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                },
+                "description": "Ruta `lb://SHIPMENT-SERVICE`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "description": "El gateway resuelve los nombres lógicos en Eureka y balancea hacia las instancias registradas."
+        },
+        {
+          "name": "Autenticacion (filtro JWT)",
+          "item": [
+            {
+              "name": "Sin token -> 401 desde el gateway",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/envios",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                },
+                "description": "El filtro global rechaza la petición sin llegar al servicio."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });",
+                      "pm.test(\"Título del error: No autorizado\", function () { pm.expect(pm.response.json().title).to.eql(\"No autorizado\"); });",
+                      "pm.test(\"Formato application/problem+json\", function () { pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Sin token a repartidores -> 401",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/repartidores",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });",
+                      "pm.test(\"Título del error: No autorizado\", function () { pm.expect(pm.response.json().title).to.eql(\"No autorizado\"); });",
+                      "pm.test(\"Formato application/problem+json\", function () { pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Token inventado -> 401",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer esto.no.es.un.jwt",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/envios",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });",
+                      "pm.test(\"Título del error: No autorizado\", function () { pm.expect(pm.response.json().title).to.eql(\"No autorizado\"); });",
+                      "pm.test(\"Formato application/problem+json\", function () { pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Token con la firma alterada -> 401",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAlterado}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/envios",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                },
+                "description": "Demuestra HMAC-SHA256: el gateway recalcula la firma con `JWT_SECRET` y no coincide."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Cambia un carácter de la firma del token del ADMIN: la firma HMAC deja de coincidir.",
+                      "const partes = (pm.environment.get(\"tokenAdmin\") || \"\").split(\".\");",
+                      "if (partes.length === 3) {",
+                      "    const firma = partes[2];",
+                      "    const i = 10;",
+                      "    partes[2] = firma.substring(0, i) + (firma[i] === \"A\" ? \"B\" : \"A\") + firma.substring(i + 1);",
+                      "}",
+                      "pm.environment.set(\"tokenAlterado\", partes.join(\".\"));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });",
+                      "pm.test(\"Título del error: No autorizado\", function () { pm.expect(pm.response.json().title).to.eql(\"No autorizado\"); });",
+                      "pm.test(\"Formato application/problem+json\", function () { pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Esquema distinto de Bearer -> 401",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Basic dXN1YXJpbzpjbGF2ZQ==",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/envios",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 401\", function () { pm.response.to.have.status(401); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Rutas que no existen",
+          "item": [
+            {
+              "name": "Ruta que el gateway no conoce -> 404",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/ruta-inexistente",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ruta-inexistente"
+                  ]
+                },
+                "description": "Los servicios no son accesibles por ninguna otra ruta: lo que no está en la tabla de rutas del gateway no llega a ningún lado."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 404\", function () { pm.response.to.have.status(404); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Autorizacion por roles",
+          "item": [
+            {
+              "name": "ADMIN registra un repartidor -> pasa al servicio (201)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/repartidores",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"Repartidor GW {{sufijo}}\",\n  \"tipoVehiculo\": \"MOTO\",\n  \"email\": \"gw.rep.{{sufijo}}@logitrack.test\",\n  \"telefono\": \"+54 388 400-3000\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.environment.set(\"sufijo\", String(Date.now()));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "CLIENTE intenta registrar un repartidor -> 403 desde el gateway",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenClienteA}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/repartidores",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"No deberia\",\n  \"tipoVehiculo\": \"MOTO\",\n  \"email\": \"no.{{sufijo}}@logitrack.test\",\n  \"telefono\": \"+54 388 400-3001\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.environment.set(\"sufijo\", String(Date.now()));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 403\", function () { pm.response.to.have.status(403); });",
+                      "pm.test(\"Título del error: Acceso denegado\", function () { pm.expect(pm.response.json().title).to.eql(\"Acceso denegado\"); });",
+                      "pm.test(\"Formato application/problem+json\", function () { pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "REPARTIDOR intenta cambiar el estado de un repartidor -> 403",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenRepartidor}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/repartidores/{{lucia_id}}/estado",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores",
+                    "{{lucia_id}}",
+                    "estado"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"estado\": \"INACTIVO\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 403\", function () { pm.response.to.have.status(403); });",
+                      "pm.test(\"Título del error: Acceso denegado\", function () { pm.expect(pm.response.json().title).to.eql(\"Acceso denegado\"); });",
+                      "pm.test(\"Formato application/problem+json\", function () { pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "CLIENTE intenta un DELETE sobre repartidores -> 403 desde el gateway",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenClienteA}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/repartidores/{{lucia_id}}",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores",
+                    "{{lucia_id}}"
+                  ]
+                },
+                "description": "`POST`, `PUT`, `PATCH` y `DELETE` sobre `/api/v1/repartidores/**` son solo de ADMIN."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 403\", function () { pm.response.to.have.status(403); });",
+                      "pm.test(\"Título del error: Acceso denegado\", function () { pm.expect(pm.response.json().title).to.eql(\"Acceso denegado\"); });",
+                      "pm.test(\"Formato application/problem+json\", function () { pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "CLIENTE consulta repartidores (GET permitido) -> 200",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenClienteA}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/repartidores",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "repartidores"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "REPARTIDOR consulta su hoja de ruta -> 200",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenRepartidor}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/envios",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                },
+                "description": "El gateway deja pasar a los tres roles en `/api/v1/envios/**`; el recorte por pertenencia lo hace shipment-service."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "REPARTIDOR intenta crear un envío -> 403 (lo decide shipment-service)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenRepartidor}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/envios",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                },
+                "description": "El gateway lo deja pasar y es shipment-service quien lo rechaza: autorización general en el borde, fina en el servicio.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"origenCalle\": \"Belgrano\",\n  \"origenNumero\": \"450\",\n  \"origenCiudad\": \"San Salvador de Jujuy\",\n  \"origenCodigoPostal\": \"4600\",\n  \"destinoCalle\": \"Av. Fascio\",\n  \"destinoNumero\": \"1200\",\n  \"destinoCiudad\": \"San Salvador de Jujuy\",\n  \"destinoCodigoPostal\": \"4600\",\n  \"peso\": 2.5,\n  \"ancho\": 30,\n  \"alto\": 20,\n  \"largo\": 10,\n  \"cliente\": {\n    \"nombre\": \"Tienda Norte SRL\",\n    \"email\": \"ventas@tiendanorte.com\",\n    \"telefono\": \"+54 388 400-1000\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 403\", function () { pm.response.to.have.status(403); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "CORS (solo si se implemento S3-08)",
+          "item": [
+            {
+              "name": "Preflight con un origen permitido -> headers CORS, sin token",
+              "request": {
+                "method": "OPTIONS",
+                "header": [
+                  {
+                    "key": "Origin",
+                    "value": "{{cors_origin}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Access-Control-Request-Method",
+                    "value": "GET",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Access-Control-Request-Headers",
+                    "value": "authorization,content-type",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/envios",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                },
+                "description": "Usa el origen de la variable `cors_origin`: tiene que ser uno de los permitidos en `api-gateway.yml`."
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Responde 200 o 204\", function () { pm.expect(pm.response.code).to.be.oneOf([200, 204]); });",
+                      "pm.test(\"Incluye Access-Control-Allow-Origin\", function () { pm.expect(pm.response.headers.has(\"Access-Control-Allow-Origin\")).to.eql(true); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Preflight con un origen NO permitido -> sin headers CORS",
+              "request": {
+                "method": "OPTIONS",
+                "header": [
+                  {
+                    "key": "Origin",
+                    "value": "http://sitio-no-permitido.example",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Access-Control-Request-Method",
+                    "value": "GET",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{gateway_url}}/api/v1/envios",
+                  "host": [
+                    "{{gateway_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "envios"
+                  ]
+                }
+              },
+              "response": [],
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"No incluye Access-Control-Allow-Origin\", function () { pm.expect(pm.response.headers.has(\"Access-Control-Allow-Origin\")).to.eql(false); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "description": "Deseable según el enunciado. Si CORS no está configurado, esta carpeta se puede omitir."
+        }
+      ],
+      "description": "Punto único de entrada: enrutamiento dinámico por Eureka, validación centralizada del JWT y autorización por roles. Todas las demás carpetas también pasan por el gateway."
     }
   ]
 }

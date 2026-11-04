@@ -8,11 +8,11 @@
 ###
 ### Antes de correr este archivo, ejecutá en security.http los requests 1.1 (o 1.2) y 2.1 a 2.3 (o 2.5 a 2.7)
 ### para que existan los usuarios y se guarden sus tokens.
-### Requiere security-service (8083), shipment-service (8081) y courier-service (8082).
+### Requiere el sistema completo levantado (Docker). Todas las requests entran por el api-gateway (8066).
 ### =====================================================================
 
-@security = http://localhost:8083
-@host = http://localhost:8081
+@security = http://localhost:8066
+@host = http://localhost:8066
 @admin = token-de-prueba
 @clienteA = token-de-prueba
 @clienteB = token-de-prueba

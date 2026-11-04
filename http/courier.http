@@ -1,14 +1,14 @@
 ### =====================================================================
-### courier-service (puerto 8082) - repartidores y disponibilidad
+### courier-service - repartidores y disponibilidad (por el api-gateway, puerto 8066)
 ###
-### Requiere security-service (8083) para obtener el token.
+### Requiere el sistema completo levantado (Docker). Todas las requests entran por el api-gateway (8066).
 ### Los UUID de ejemplo existen en db/init/02-couriers.sql:
 ###   Lucía (ACTIVA) ...01 · Martín (ACTIVO) ...02 · Sofía (INACTIVA) ...03
 ### Compatible con IntelliJ HTTP Client.
 ### =====================================================================
 
-@security = http://localhost:8083
-@host = http://localhost:8082
+@security = http://localhost:8066
+@host = http://localhost:8066
 @token = token-de-prueba
 @lucia = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e01
 @sofia = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e03

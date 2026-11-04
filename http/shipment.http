@@ -1,15 +1,15 @@
 ### =====================================================================
-### shipment-service (puerto 8081) - envíos, historial y asignación de repartidores
+### shipment-service - envíos, historial y asignación de repartidores (por el api-gateway, puerto 8066)
 ###
-### Requiere security-service (8083) para el token y courier-service (8082) para asignar
+### Todas las requests entran por el api-gateway (8066). Para asignar
 ### repartidores: shipment-service le consulta la disponibilidad con OpenFeign.
 ### Los envíos de ejemplo existen en db/init/01-schema.sql:
 ###   ...01 PENDIENTE · ...02 PENDIENTE · ...03 EN_RUTA · ...04 ENTREGADO · ...05 CANCELADO
 ### Compatible con IntelliJ HTTP Client (usa scripts para guardar el id del envío).
 ### =====================================================================
 
-@security = http://localhost:8083
-@host = http://localhost:8081
+@security = http://localhost:8066
+@host = http://localhost:8066
 @token = token-de-prueba
 @envioId = eeeeeeee-0000-4000-8000-000000000001
 @codigo = LT-2026-000001
