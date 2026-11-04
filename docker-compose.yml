@@ -1,7 +1,7 @@
 # =====================================================================
 # LogiTrack · entorno completo (infraestructura)
 #
-# Levanta los 4 servicios y sus 3 bases MySQL usando las imágenes publicadas en Docker Hub:
+# Levanta los 6 servicios y sus 3 bases MySQL usando las imágenes publicadas en Docker Hub:
 #   docker compose up -d
 #
 # Para construir las imágenes desde el código de cada repositorio, en lugar de descargarlas
@@ -9,6 +9,13 @@
 #   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 #
 # Antes de levantarlo hay que copiar .env.example a .env y completar los secretos.
+#
+# Orden de arranque (S3-09), con depends_on y condition: service_healthy:
+#   config-server -> eureka-server -> security, courier y shipment (con sus bases) -> api-gateway
+#
+# Desde la PC solo se entra por el api-gateway (8066). También quedan publicados el panel de
+# Eureka (8065), el config-server (8888) y las bases (3307-3309, para correr los servicios desde el IDE).
+# security, courier y shipment ya no publican 8081-8083: solo se llega a ellos por el gateway.
 # Entre contenedores no se usa localhost: cada servicio se encuentra por su nombre
 # dentro de la red logitrack-net (config-server, mysql-shipment, courier-service, etc.).
 # =====================================================================
@@ -95,9 +102,25 @@ services:
     ports:
       - "8888:8888"
 
+  # ---------------------------------------------------------------- descubrimiento
+
+  eureka-server:
+    <<: *servicio-spring
+    image: ${DOCKERHUB_USER:-logitrack}/logitrack-eureka-server:${IMAGE_TAG:-1.0.0}
+    container_name: logitrack-eureka-server
+    depends_on:
+      config-server:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      CONFIG_SERVER_URL: http://config-server:8888
+    ports:
+      - "8065:8065"
+
   # ---------------------------------------------------------------- microservicios
   # Todos arrancan con el perfil prod: toman su configuración del config-server
-  # (logitrack-config/<servicio>-prod.yml) y reciben los secretos por variables de entorno.
+  # (logitrack-config/<servicio>-prod.yml), se registran en eureka-server y reciben los secretos
+  # por variables de entorno.
 
   security-service:
     <<: *servicio-spring
@@ -105,6 +128,8 @@ services:
     container_name: logitrack-security-service
     depends_on:
       config-server:
+        condition: service_healthy
+      eureka-server:
         condition: service_healthy
       mysql-security:
         condition: service_healthy
@@ -114,8 +139,6 @@ services:
       DB_USER: ${DB_USER:-logitrack}
       DB_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD en el archivo .env}
       JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en el archivo .env}
-    ports:
-      - "8083:8083"
 
   courier-service:
     <<: *servicio-spring
@@ -123,6 +146,8 @@ services:
     container_name: logitrack-courier-service
     depends_on:
       config-server:
+        condition: service_healthy
+      eureka-server:
         condition: service_healthy
       mysql-courier:
         condition: service_healthy
@@ -132,8 +157,6 @@ services:
       DB_USER: ${DB_USER:-logitrack}
       DB_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD en el archivo .env}
       JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en el archivo .env}
-    ports:
-      - "8082:8082"
 
   shipment-service:
     <<: *servicio-spring
@@ -141,6 +164,8 @@ services:
     container_name: logitrack-shipment-service
     depends_on:
       config-server:
+        condition: service_healthy
+      eureka-server:
         condition: service_healthy
       mysql-shipment:
         condition: service_healthy
@@ -152,8 +177,32 @@ services:
       DB_USER: ${DB_USER:-logitrack}
       DB_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD en el archivo .env}
       JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en el archivo .env}
+
+  # ---------------------------------------------------------------- puerta de entrada
+
+  # Punto único de entrada: valida el JWT, revisa roles y enruta por Eureka (lb://NOMBRE-DEL-SERVICIO).
+  api-gateway:
+    <<: *servicio-spring
+    image: ${DOCKERHUB_USER:-logitrack}/logitrack-api-gateway:${IMAGE_TAG:-1.0.0}
+    container_name: logitrack-api-gateway
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      security-service:
+        condition: service_healthy
+      courier-service:
+        condition: service_healthy
+      shipment-service:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      CONFIG_SERVER_URL: http://config-server:8888
+      JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en el archivo .env}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
     ports:
-      - "8081:8081"
+      - "8066:8066"
 
 networks:
   logitrack-net:

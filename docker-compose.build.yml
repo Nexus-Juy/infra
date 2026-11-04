@@ -8,6 +8,8 @@
 #   ProyectoFinalDAAS/
 #   ├── infra/               <- este repositorio
 #   ├── config-server/
+#   ├── eureka-server/
+#   ├── api-gateway/
 #   ├── security-service/
 #   ├── courier-service/
 #   └── shipment-service/
@@ -20,6 +22,10 @@ services:
     build:
       context: ../config-server
 
+  eureka-server:
+    build:
+      context: ../eureka-server
+
   security-service:
     build:
       context: ../security-service
@@ -31,3 +37,7 @@ services:
   shipment-service:
     build:
       context: ../shipment-service
+
+  api-gateway:
+    build:
+      context: ../api-gateway
