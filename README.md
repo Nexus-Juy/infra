@@ -16,6 +16,60 @@ Repositorio que **levanta todo el sistema LogiTrack** (Desarrollo y Arquitectura
 | `logitrack-config` | — | Archivos `.yml` por servicio y ambiente (lo lee el config-server) |
 | **`infra`** (este) | — | `docker-compose`, scripts de base de datos y requests de prueba |
 
+## Arquitectura
+
+Toda petición externa entra por el **api-gateway**: valida el JWT, revisa los roles y enruta por nombre lógico,
+que resuelve en **Eureka**. La configuración de todos viene del **config-server**. `shipment-service` consulta
+a `courier-service` con **OpenFeign** (resuelto por Eureka), con ErrorDecoder, fallback y circuit breaker.
+
+```mermaid
+flowchart LR
+    Cliente["Cliente<br/>(Postman / Apidog / Web)"]
+
+    subgraph Infra["Infraestructura"]
+        GW["api-gateway<br/>:8066"]
+        EU["eureka-server<br/>:8065"]
+        CS["config-server<br/>:8888"]
+    end
+
+    subgraph Negocio["Servicios de negocio (solo red interna)"]
+        SEC["security-service<br/>:8083"]
+        COU["courier-service<br/>:8082"]
+        SHI["shipment-service<br/>:8081"]
+    end
+
+    DBS[("MySQL<br/>security")]
+    DBC[("MySQL<br/>courier")]
+    DBH[("MySQL<br/>shipment")]
+    GIT[("GitHub<br/>logitrack-config")]
+
+    Cliente -->|"1. HTTP + JWT"| GW
+    GW -->|"2. resuelve lb://NOMBRE"| EU
+    GW -->|"/api/v1/auth/**"| SEC
+    GW -->|"/api/v1/repartidores/**"| COU
+    GW -->|"/api/v1/envios/**"| SHI
+    SHI -->|"OpenFeign + circuit breaker<br/>GET disponibilidad"| COU
+
+    SEC -.->|registro| EU
+    COU -.->|registro| EU
+    SHI -.->|registro| EU
+    GW -.->|registro| EU
+
+    CS -->|clona| GIT
+    GW -.->|configuración| CS
+    EU -.->|configuración| CS
+    SEC -.->|configuración| CS
+    COU -.->|configuración| CS
+    SHI -.->|configuración| CS
+
+    SEC --- DBS
+    COU --- DBC
+    SHI --- DBH
+```
+
+Línea continua: llamada HTTP. Línea punteada: registro en Eureka o lectura de configuración al arrancar.
+Rutas del gateway, roles, flujo de una petición y tolerancia a fallos: [`docs/arquitectura.md`](docs/arquitectura.md).
+
 ## Cómo levantarlo (con las imágenes de Docker Hub)
 
 Solo hace falta **Docker Desktop** abierto.
@@ -121,8 +175,14 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml push
 
 ### Pruebas en Apidog (`apidog/`)
 
-La carpeta `apidog/` trae una colección con más de 100 requests y sus aserciones, lista para importar en Apidog
-(o en Postman), junto con el entorno y un guion para la demostración. Ver `apidog/README.md`.
+La carpeta `apidog/` trae una colección con **135 requests** y sus aserciones, lista para importar en Apidog (o en
+Postman), junto con el entorno `LogiTrack local` y un guion para la demostración. **Todas las requests entran por el
+gateway** (`http://localhost:8066`). Incluye la infraestructura (Eureka con los servicios registrados), cada
+servicio, la autorización por pertenencia, un escenario completo de punta a punta y las pruebas del gateway
+(401, 403, rutas y CORS). Ver [`apidog/README.md`](apidog/README.md).
+
+La verificación manual completa del sprint (checklist de 20 pasos) está en
+[`docs/verificacion-sprint3.md`](docs/verificacion-sprint3.md).
 
 ### Requests de prueba (`http/`)
 
@@ -133,8 +193,8 @@ La carpeta `apidog/` trae una colección con más de 100 requests y sus asercion
 | `shipment.http` | Ciclo de vida de un envío, historial y asignación de repartidores (comunicación con courier por OpenFeign) |
 | `cliente.http` | Autorización por pertenencia: cada cliente solo ve sus envíos, el repartidor solo los asignados, el ADMIN todo |
 
-Cada archivo guarda el token en una variable global al hacer login. Orden recomendado: `security.http`,
-`courier.http`, `shipment.http` y `cliente.http`.
+Todos apuntan al gateway (`http://localhost:8066`). Cada archivo guarda el token en una variable global al hacer
+login. Orden recomendado: `security.http`, `courier.http`, `shipment.http` y `cliente.http`.
 
 ## Detener
 
