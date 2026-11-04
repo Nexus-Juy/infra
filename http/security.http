@@ -1,12 +1,12 @@
 ### =====================================================================
-### security-service (puerto 8083) - usuarios, login y JWT
+### security-service - usuarios, login y JWT (por el api-gateway, puerto 8066)
 ###
 ### Es el primer archivo que hay que correr: crea los usuarios que usan los demás
 ### (ADMIN, dos CLIENTES y un REPARTIDOR) y guarda sus tokens en variables globales.
 ### Compatible con IntelliJ HTTP Client.
 ### =====================================================================
 
-@security = http://localhost:8083
+@security = http://localhost:8066
 @token = token-de-prueba
 @clienteA = token-de-prueba
 @clienteB = token-de-prueba
