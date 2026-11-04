@@ -94,7 +94,7 @@ services:
 
   config-server:
     <<: *servicio-spring
-    image: ${DOCKERHUB_USER:-logitrack}/logitrack-config-server:${IMAGE_TAG:-1.0.0}
+    image: ${DOCKERHUB_USER:-logitrack}/logitrack-config-server:${IMAGE_TAG:-3.0.0}
     container_name: logitrack-config-server
     environment:
       CONFIG_REPO_URI: ${CONFIG_REPO_URI:-https://github.com/maxiacostag-cloud/logitrack-config.git}
@@ -106,7 +106,7 @@ services:
 
   eureka-server:
     <<: *servicio-spring
-    image: ${DOCKERHUB_USER:-logitrack}/logitrack-eureka-server:${IMAGE_TAG:-1.0.0}
+    image: ${DOCKERHUB_USER:-logitrack}/logitrack-eureka-server:${IMAGE_TAG:-3.0.0}
     container_name: logitrack-eureka-server
     depends_on:
       config-server:
@@ -124,7 +124,7 @@ services:
 
   security-service:
     <<: *servicio-spring
-    image: ${DOCKERHUB_USER:-logitrack}/logitrack-security-service:${IMAGE_TAG:-1.0.0}
+    image: ${DOCKERHUB_USER:-logitrack}/logitrack-security-service:${IMAGE_TAG:-3.0.0}
     container_name: logitrack-security-service
     depends_on:
       config-server:
@@ -142,7 +142,7 @@ services:
 
   courier-service:
     <<: *servicio-spring
-    image: ${DOCKERHUB_USER:-logitrack}/logitrack-courier-service:${IMAGE_TAG:-1.0.0}
+    image: ${DOCKERHUB_USER:-logitrack}/logitrack-courier-service:${IMAGE_TAG:-3.0.0}
     container_name: logitrack-courier-service
     depends_on:
       config-server:
@@ -160,7 +160,7 @@ services:
 
   shipment-service:
     <<: *servicio-spring
-    image: ${DOCKERHUB_USER:-logitrack}/logitrack-shipment-service:${IMAGE_TAG:-1.0.0}
+    image: ${DOCKERHUB_USER:-logitrack}/logitrack-shipment-service:${IMAGE_TAG:-3.0.0}
     container_name: logitrack-shipment-service
     depends_on:
       config-server:
@@ -183,7 +183,7 @@ services:
   # Punto único de entrada: valida el JWT, revisa roles y enruta por Eureka (lb://NOMBRE-DEL-SERVICIO).
   api-gateway:
     <<: *servicio-spring
-    image: ${DOCKERHUB_USER:-logitrack}/logitrack-api-gateway:${IMAGE_TAG:-1.0.0}
+    image: ${DOCKERHUB_USER:-logitrack}/logitrack-api-gateway:${IMAGE_TAG:-3.0.0}
     container_name: logitrack-api-gateway
     depends_on:
       config-server:
