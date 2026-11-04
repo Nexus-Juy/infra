@@ -1,0 +1,233 @@
+### =====================================================================
+### security-service - usuarios, login y JWT (por el api-gateway, puerto 8066)
+###
+### Es el primer archivo que hay que correr: crea los usuarios que usan los demás
+### (ADMIN, dos CLIENTES y un REPARTIDOR) y guarda sus tokens en variables globales.
+### Compatible con IntelliJ HTTP Client.
+### =====================================================================
+
+@security = http://localhost:8066
+@token = token-de-prueba
+@clienteA = token-de-prueba
+@clienteB = token-de-prueba
+@repartidor = token-de-prueba
+@lucia = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e01
+
+### ---------------------------------------------------------------------
+### 1. ADMIN
+### ---------------------------------------------------------------------
+
+### 1.1. Registro inicial de un ADMIN (la primera vez) -> 201
+POST {{security}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "admin.demo",
+  "email": "admin.demo@logitrack.test",
+  "password": "admin123",
+  "rol": "ADMIN"
+}
+
+> {%
+    client.global.set("token", response.body.token);
+    client.test("Token guardado", function () {
+        client.assert(response.status === 201, "Se esperaba 201; si dio 409 usar el request 1.2");
+    });
+%}
+
+### 1.2. Login del ADMIN (cuando ya está registrado) -> 200
+POST {{security}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "admin.demo",
+  "password": "admin123"
+}
+
+> {%
+    client.global.set("token", response.body.token);
+%}
+
+### 1.3. Datos del usuario del token -> 200
+GET {{security}}/api/v1/auth/me
+Authorization: Bearer {{token}}
+
+### ---------------------------------------------------------------------
+### 2. CLIENTES y REPARTIDOR (los usa cliente.http)
+### ---------------------------------------------------------------------
+
+### 2.1. Alta del CLIENTE A (si ya existe da 409: usar el login 2.5) -> 201
+POST {{security}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "cliente.a",
+  "email": "cliente.a@logitrack.test",
+  "password": "cliente123",
+  "rol": "CLIENTE"
+}
+
+> {%
+    client.global.set("clienteA", response.body.token);
+%}
+
+### 2.2. Alta del CLIENTE B -> 201
+POST {{security}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "cliente.b",
+  "email": "cliente.b@logitrack.test",
+  "password": "cliente123",
+  "rol": "CLIENTE"
+}
+
+> {%
+    client.global.set("clienteB", response.body.token);
+%}
+
+### 2.3. Alta del usuario REPARTIDOR vinculado a Lucía (que vive en courier-service) -> 201
+### El claim repartidorId del token sale de acá; sin él, el repartidor no puede listar envíos.
+POST {{security}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "repartidor.lucia",
+  "email": "lucia.fernandez@logitrack.test",
+  "password": "repartidor123",
+  "rol": "REPARTIDOR",
+  "repartidorId": "{{lucia}}"
+}
+
+> {%
+    client.global.set("repartidor", response.body.token);
+%}
+
+### 2.4. Sin rol, el usuario queda como CLIENTE por defecto -> 201
+POST {{security}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "cliente.por.defecto",
+  "email": "cliente.por.defecto@logitrack.test",
+  "password": "cliente123"
+}
+
+### 2.5. Login del CLIENTE A (alternativa al alta) -> 200
+POST {{security}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "cliente.a",
+  "password": "cliente123"
+}
+
+> {%
+    client.global.set("clienteA", response.body.token);
+%}
+
+### 2.6. Login del CLIENTE B (alternativa al alta) -> 200
+POST {{security}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "cliente.b",
+  "password": "cliente123"
+}
+
+> {%
+    client.global.set("clienteB", response.body.token);
+%}
+
+### 2.7. Login del REPARTIDOR (alternativa al alta) -> 200
+POST {{security}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "repartidor.lucia",
+  "password": "repartidor123"
+}
+
+> {%
+    client.global.set("repartidor", response.body.token);
+%}
+
+### 2.8. Login con el email en lugar del usuario -> 200
+POST {{security}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "cliente.a@logitrack.test",
+  "password": "cliente123"
+}
+
+### ---------------------------------------------------------------------
+### 3. CASOS DE ERROR
+### ---------------------------------------------------------------------
+
+### 3.1. Contraseña incorrecta -> 401 "Credenciales inválidas"
+POST {{security}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "admin.demo",
+  "password": "clave-incorrecta"
+}
+
+### 3.2. Usuario inexistente -> 401 (mismo mensaje y mismo tiempo que el anterior)
+POST {{security}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "no.existe",
+  "password": "cualquier-clave"
+}
+
+### 3.3. Usuario ya registrado -> 409
+POST {{security}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "admin.demo",
+  "email": "otro@logitrack.test",
+  "password": "admin123",
+  "rol": "ADMIN"
+}
+
+### 3.4. Contraseña demasiado corta (mínimo 8) -> 400 con invalid-params
+POST {{security}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "usuario.corto",
+  "email": "usuario.corto@logitrack.test",
+  "password": "123"
+}
+
+### 3.5. Email inválido -> 400
+POST {{security}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "usuario.mail",
+  "email": "esto-no-es-un-mail",
+  "password": "admin12345"
+}
+
+### 3.6. REPARTIDOR sin repartidorId -> 422
+POST {{security}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "repartidor.sin.id",
+  "email": "repartidor.sin.id@logitrack.test",
+  "password": "repartidor123",
+  "rol": "REPARTIDOR"
+}
+
+### 3.7. /me sin token -> 401
+GET {{security}}/api/v1/auth/me
+
+### 3.8. /me con un token inventado -> 401
+GET {{security}}/api/v1/auth/me
+Authorization: Bearer esto.no.es.un.jwt
