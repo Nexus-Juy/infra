@@ -16,7 +16,7 @@ publican puertos en el host: solo el gateway (8066), Eureka (8065) y el config-s
 | Carpeta | Qué muestra |
 |---|---|
 | `00 - Infraestructura` | Health de config-server, eureka-server y api-gateway; **los 4 servicios registrados en Eureka** (`UP`); configuración que entrega el config-server a cada servicio |
-| `01 - Preparacion` | Crea los usuarios de prueba (ADMIN, 2 CLIENTES, REPARTIDOR) y guarda sus tokens. **Correr primero** |
+| `01 - Preparacion` | Login del ADMIN y del REPARTIDOR de demo, registro de 2 CLIENTES, y guarda sus tokens. **Correr primero** |
 | `02 - security-service` | Registro, login (usuario o email), `/me`, validaciones y token inválido o alterado |
 | `03 - courier-service` | Alta y consulta de repartidores, estado y **disponibilidad**, permisos por rol |
 | `04 - shipment-service` | Ciclo de vida de un envío, historial, **asignación con OpenFeign**, permisos y errores |
@@ -59,7 +59,7 @@ Las URLs, las credenciales del ADMIN y los ids de los datos de ejemplo vienen en
 | `security_url`, `courier_url`, `shipment_url` | `http://localhost:8066` | Apuntan al gateway: este enruta a cada servicio |
 | `eureka_url` | `http://localhost:8065` | Panel y API de Eureka |
 | `config_url` | `http://localhost:8888` | Config-server |
-| `admin_username`, `admin_password` | `admin.demo` / `admin123` | Usuario ADMIN de prueba |
+| `admin_username`, `admin_password` | `gw.admin` / `gateway123` | Usuario ADMIN de demo (lo crea security-service al arrancar, S4-14). La misma contraseña sirve para `gw.repartidor` |
 | `cors_origin` | `http://localhost:3000` | Origen para las pruebas de CORS |
 
 Las pruebas guardan tokens e ids con `pm.environment.set`. Si en tu versión de Apidog algún script no se importara,
@@ -118,7 +118,7 @@ npx newman run LogiTrack.postman_collection.json -e LogiTrack-local.postman_envi
 
 ## Notas
 
-- Los datos de ejemplo (Lucía, Martín, Sofía y los envíos de prueba) se cargan solo cuando se crea la base. Si ya
+- Los datos de ejemplo (Brian Abalos, Martín, Sofía y los envíos de prueba) se cargan solo cuando se crea la base. Si ya
   se modificaron, `docker compose down -v` y volver a levantar los deja como al principio.
 - Las pruebas crean usuarios y envíos nuevos en cada corrida (con un sufijo único); no hace falta limpiar nada.
 - Los tokens y las credenciales de prueba son solo para entorno local. No subir al repositorio un entorno exportado

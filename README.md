@@ -25,7 +25,8 @@ a `courier-service` con **OpenFeign** (resuelto por Eureka), con ErrorDecoder, f
 
 ```mermaid
 flowchart LR
-    Cliente["Cliente<br/>(Postman / Apidog / Web)"]
+    Cliente["Cliente<br/>(Navegador / Postman / Apidog)"]
+    WEB["logitrack-frontend<br/>:3000 (React + Nginx)"]
 
     subgraph Infra["Infraestructura"]
         GW["api-gateway<br/>:8066"]
@@ -44,6 +45,8 @@ flowchart LR
     DBH[("MySQL<br/>shipment")]
     GIT[("GitHub<br/>logitrack-config")]
 
+    Cliente -->|"app web"| WEB
+    WEB -->|"/api (proxy de Nginx)"| GW
     Cliente -->|"1. HTTP + JWT"| GW
     GW -->|"2. resuelve lb://NOMBRE"| EU
     GW -->|"/api/v1/auth/**"| SEC
@@ -83,7 +86,22 @@ docker compose ps
 ```
 
 En 2 o 3 minutos tienen que aparecer los 10 contenedores en `healthy`. Después se abre la app en
-**http://localhost:3000**.
+**http://localhost:3000** y se entra con alguno de los [usuarios de prueba](#usuarios-de-prueba-por-rol).
+
+### Usuarios de prueba por rol
+
+security-service los crea solo al arrancar (S4-14), si no existen. La contraseña de los tres es la de
+`USUARIOS_DEMO_PASSWORD` en el `.env` (en el `.env.example` es `gateway123`).
+
+| Usuario | Rol | Qué puede hacer en la app |
+|---|---|---|
+| `gw.admin` | ADMIN | Ve todos los envíos; registra, asigna repartidor, cambia el estado y cancela. Da de alta, edita y activa o desactiva repartidores |
+| `gw.cliente` | CLIENTE | Ve solo sus envíos; registra envíos nuevos, les asigna repartidor y los cancela mientras están pendientes |
+| `gw.repartidor` | REPARTIDOR | Vinculado al repartidor **Brian Abalos**. Ve su hoja de ruta y pasa sus envíos a "En ruta" y a "Entregado" |
+
+Desde la pantalla de login, "Crear una cuenta de cliente" registra usuarios nuevos. El registro público
+**siempre crea un CLIENTE**, aunque el pedido diga otro rol (S4-14): nadie puede hacerse ADMIN o REPARTIDOR solo.
+Los repartidores de ejemplo (Brian Abalos, Martín Quispe y Sofía Mamaní) y algunos envíos vienen en `db/init`.
 
 ### Orden de arranque y puertos
 
@@ -107,9 +125,11 @@ etc.). También quedan publicados el panel de Eureka (8065), el config-server (8
 
 | Variable | Qué poner |
 |---|---|
-| `DOCKERHUB_USER` / `IMAGE_TAG` | Usuario de Docker Hub (`macostag26`) y versión de las imágenes (`3.0.0`) |
+| `DOCKERHUB_USER` / `IMAGE_TAG` | Usuario de Docker Hub (`macostag26`) y versión de las imágenes (`4.0.0`) |
+| `FRONTEND_TAG` | Versión de la imagen del frontend (`1.0.0`) |
 | `DB_USER` / `DB_PASSWORD` / `MYSQL_ROOT_PASSWORD` | Credenciales de MySQL (las que quieran) |
 | `JWT_SECRET` | Obligatoria, **mínimo 32 caracteres**. La usan security-service y el api-gateway (y los servicios). Generar con `openssl rand -base64 48` |
+| `USUARIOS_DEMO_PASSWORD` | Contraseña de los [usuarios de prueba](#usuarios-de-prueba-por-rol). Vacía: no se crean |
 | `CORS_ALLOWED_ORIGINS` | Opcional: orígenes permitidos para CORS en el gateway, separados por coma |
 
 PowerShell, sin `openssl`:
@@ -142,20 +162,22 @@ cd infra
 docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
-## Imágenes publicadas en Docker Hub (S3-10)
+## Imágenes publicadas en Docker Hub
 
-La versión del Sprint 3 es la **`3.0.0`**: incluye eureka-server y api-gateway, y los servicios registrados en
-Eureka. Con el `.env` completo, `docker compose up -d` descarga estas imágenes y levanta todo sin construir
-nada. La `1.0.0` (Sprint 2) sigue publicada y no se modificó.
+La versión del Sprint 4 es la **`4.0.0`**. El único servicio que cambió respecto de la `3.0.0` es
+security-service (registro público solo de clientes y usuarios de demo, S4-14); los demás son la misma imagen
+con la etiqueta nueva, para que todo el sistema use una sola versión. Con el `.env` completo,
+`docker compose up -d` descarga estas imágenes y levanta todo sin construir nada. La `3.0.0` (Sprint 3) y la
+`1.0.0` (Sprint 2) siguen publicadas y no se modificaron.
 
 | Imagen | Descarga |
 |---|---|
-| [`macostag26/logitrack-config-server:3.0.0`](https://hub.docker.com/r/macostag26/logitrack-config-server) | `docker pull macostag26/logitrack-config-server:3.0.0` |
-| [`macostag26/logitrack-eureka-server:3.0.0`](https://hub.docker.com/r/macostag26/logitrack-eureka-server) | `docker pull macostag26/logitrack-eureka-server:3.0.0` |
-| [`macostag26/logitrack-api-gateway:3.0.0`](https://hub.docker.com/r/macostag26/logitrack-api-gateway) | `docker pull macostag26/logitrack-api-gateway:3.0.0` |
-| [`macostag26/logitrack-security-service:3.0.0`](https://hub.docker.com/r/macostag26/logitrack-security-service) | `docker pull macostag26/logitrack-security-service:3.0.0` |
-| [`macostag26/logitrack-courier-service:3.0.0`](https://hub.docker.com/r/macostag26/logitrack-courier-service) | `docker pull macostag26/logitrack-courier-service:3.0.0` |
-| [`macostag26/logitrack-shipment-service:3.0.0`](https://hub.docker.com/r/macostag26/logitrack-shipment-service) | `docker pull macostag26/logitrack-shipment-service:3.0.0` |
+| [`macostag26/logitrack-config-server:4.0.0`](https://hub.docker.com/r/macostag26/logitrack-config-server) | `docker pull macostag26/logitrack-config-server:4.0.0` |
+| [`macostag26/logitrack-eureka-server:4.0.0`](https://hub.docker.com/r/macostag26/logitrack-eureka-server) | `docker pull macostag26/logitrack-eureka-server:4.0.0` |
+| [`macostag26/logitrack-api-gateway:4.0.0`](https://hub.docker.com/r/macostag26/logitrack-api-gateway) | `docker pull macostag26/logitrack-api-gateway:4.0.0` |
+| [`macostag26/logitrack-security-service:4.0.0`](https://hub.docker.com/r/macostag26/logitrack-security-service) | `docker pull macostag26/logitrack-security-service:4.0.0` |
+| [`macostag26/logitrack-courier-service:4.0.0`](https://hub.docker.com/r/macostag26/logitrack-courier-service) | `docker pull macostag26/logitrack-courier-service:4.0.0` |
+| [`macostag26/logitrack-shipment-service:4.0.0`](https://hub.docker.com/r/macostag26/logitrack-shipment-service) | `docker pull macostag26/logitrack-shipment-service:4.0.0` |
 
 El frontend se publica con su propia versión (`FRONTEND_TAG` en el `.env`):
 
@@ -171,7 +193,7 @@ Para publicar cambios, se construye con una etiqueta nueva (nunca se pisa una ya
 
 ```bash
 docker login
-# en .env: IMAGE_TAG=3.0.1 (o la que siga)
+# en .env: IMAGE_TAG=4.0.1 (o la que siga)
 docker compose -f docker-compose.yml -f docker-compose.build.yml build
 docker compose -f docker-compose.yml -f docker-compose.build.yml push
 ```
@@ -201,7 +223,7 @@ La verificación manual completa del sprint (checklist de 20 pasos) está en
 
 | Archivo | Qué prueba |
 |---|---|
-| `security.http` | Registro y login de ADMIN, CLIENTES y REPARTIDOR, `/me` y errores (401, 409, 400, 422). **Correr primero.** |
+| `security.http` | Login de los usuarios de demo, registro de CLIENTES (y que pedir otro rol igual da CLIENTE), `/me` y errores (401, 409, 400). **Correr primero.** |
 | `courier.http` | Alta, consulta y estado de repartidores, y el endpoint de disponibilidad que consume shipment-service |
 | `shipment.http` | Ciclo de vida de un envío, historial y asignación de repartidores (comunicación con courier por OpenFeign) |
 | `cliente.http` | Autorización por pertenencia: cada cliente solo ve sus envíos, el repartidor solo los asignados, el ADMIN todo |
@@ -226,3 +248,5 @@ docker compose down -v     # además borra las bases (se recrean con los scripts
 | Puertos ocupados (3000, 8066, 8065, 8888, 3307-3309) | Frenar lo que los usa, por ejemplo servicios corriendo desde el IDE |
 | El gateway responde 503 justo después de levantar | Los servicios todavía no aparecen en Eureka: esperar unos 30 segundos |
 | Datos viejos o esquema desactualizado | `docker compose down -v` y volver a levantar |
+| `gw.admin` da "Credenciales inválidas" | Falta `USUARIOS_DEMO_PASSWORD` en el `.env`, o el usuario ya existía en la base con otra contraseña (los usuarios de demo no se pisan). Con `docker compose down -v` se recrean |
+| Después de reiniciar Docker Desktop, eureka-server queda `unhealthy` | Los contenedores arrancaron en desorden. `docker compose down` y `docker compose up -d` |
