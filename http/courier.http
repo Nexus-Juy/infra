@@ -3,50 +3,35 @@
 ###
 ### Requiere el sistema completo levantado (Docker). Todas las requests entran por el api-gateway (8066).
 ### Los UUID de ejemplo existen en db/init/02-couriers.sql:
-###   Lucía (ACTIVA) ...01 · Martín (ACTIVO) ...02 · Sofía (INACTIVA) ...03
+###   Brian (ACTIVO) ...01 · Martín (ACTIVO) ...02 · Sofía (INACTIVA) ...03
 ### Compatible con IntelliJ HTTP Client.
 ### =====================================================================
 
 @security = http://localhost:8066
 @host = http://localhost:8066
 @token = token-de-prueba
-@lucia = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e01
+@brian = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e01
 @sofia = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e03
 @repartidorId = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e01
 
 ### ---------------------------------------------------------------------
-### 0. AUTENTICACIÓN (correr una de las dos)
+### 0. AUTENTICACIÓN
 ### ---------------------------------------------------------------------
 
-### 0.1. Registro inicial de un ADMIN (la primera vez) -> 201
-POST {{security}}/api/v1/auth/register
+### 0.1. Login del ADMIN de demo (security-service lo crea al arrancar, S4-14) -> 200
+POST {{security}}/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "username": "admin.demo",
-  "email": "admin.demo@logitrack.test",
-  "password": "admin123",
-  "rol": "ADMIN"
+  "usernameOrEmail": "gw.admin",
+  "password": "gateway123"
 }
 
 > {%
     client.global.set("token", response.body.token);
     client.test("Token guardado", function () {
-        client.assert(response.status === 201, "Se esperaba 201; si dio 409 usar el request 0.2");
+        client.assert(response.status === 200, "Se esperaba 200; revisar USUARIOS_DEMO_PASSWORD en el .env");
     });
-%}
-
-### 0.2. Login (usar cuando el usuario ya está registrado) -> 200
-POST {{security}}/api/v1/auth/login
-Content-Type: application/json
-
-{
-  "usernameOrEmail": "admin.demo",
-  "password": "admin123"
-}
-
-> {%
-    client.global.set("token", response.body.token);
 %}
 
 ### ---------------------------------------------------------------------
@@ -83,9 +68,9 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "nombre": "Lucía Fernández",
+  "nombre": "Brian Abalos",
   "tipoVehiculo": "MOTO",
-  "email": "lucia.fernandez@logitrack.com",
+  "email": "brian.abalos@logitrack.com",
   "telefono": "+54 388 400-9999"
 }
 
@@ -94,8 +79,8 @@ Content-Type: application/json
 ### Es el endpoint remoto que shipment-service consulta con OpenFeign.
 ### ---------------------------------------------------------------------
 
-### 2.1. Disponibilidad de Lucía (ACTIVA) -> 200 con disponible=true
-GET {{host}}/api/v1/repartidores/{{lucia}}/disponibilidad
+### 2.1. Disponibilidad de Brian (ACTIVO) -> 200 con disponible=true
+GET {{host}}/api/v1/repartidores/{{brian}}/disponibilidad
 Authorization: Bearer {{token}}
 
 ### 2.2. Disponibilidad de Sofía (INACTIVA) -> 200 con disponible=false

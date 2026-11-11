@@ -336,52 +336,6 @@
       "name": "01 - Preparacion (correr primero)",
       "item": [
         {
-          "name": "1.1 Registrar ADMIN (201, o 409 si ya existe)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{security_url}}/api/v1/auth/register",
-              "host": [
-                "{{security_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "register"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"{{admin_username}}\",\n  \"email\": \"admin.demo@logitrack.test\",\n  \"password\": \"{{admin_password}}\",\n  \"rol\": \"ADMIN\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Responde 201 o 409\", function () { pm.expect(pm.response.code).to.be.oneOf([201, 409]); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
           "name": "1.2 Login ADMIN -> tokenAdmin",
           "request": {
             "method": "POST",
@@ -412,7 +366,8 @@
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "gw.admin es un usuario de demo: security-service lo crea al arrancar (S4-14), con la contraseña de USUARIOS_DEMO_PASSWORD del .env."
           },
           "response": [],
           "event": [
@@ -630,53 +585,6 @@
           ]
         },
         {
-          "name": "1.7 Registrar usuario REPARTIDOR (vinculado a Lucía)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{security_url}}/api/v1/auth/register",
-              "host": [
-                "{{security_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "register"
-              ]
-            },
-            "description": "El claim `repartidorId` del token sale de acá; courier-service guarda al repartidor, security-service solo su id.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"repartidor.lucia\",\n  \"email\": \"lucia.fernandez@logitrack.test\",\n  \"password\": \"repartidor123\",\n  \"rol\": \"REPARTIDOR\",\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Responde 201 o 409\", function () { pm.expect(pm.response.code).to.be.oneOf([201, 409]); });"
-                ]
-              }
-            }
-          ]
-        },
-        {
           "name": "1.8 Login REPARTIDOR -> tokenRepartidor",
           "request": {
             "method": "POST",
@@ -701,13 +609,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"usernameOrEmail\": \"repartidor.lucia\",\n  \"password\": \"repartidor123\"\n}",
+              "raw": "{\n  \"usernameOrEmail\": \"gw.repartidor\",\n  \"password\": \"{{admin_password}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "gw.repartidor es un usuario de demo vinculado a Brian Abalos (courier-service). El registro público ya no crea repartidores (S4-14)."
           },
           "response": [],
           "event": [
@@ -859,7 +768,7 @@
               ]
             },
             {
-              "name": "Registrar un REPARTIDOR con repartidorId",
+              "name": "S4-14: pedir rol REPARTIDOR crea un CLIENTE sin repartidor",
               "request": {
                 "method": "POST",
                 "header": [
@@ -908,9 +817,9 @@
                     "type": "text/javascript",
                     "exec": [
                       "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
-                      "pm.test(\"El rol es REPARTIDOR\", function () {",
+                      "pm.test(\"El registro público no da REPARTIDOR\", function () {",
                       "    const body = pm.response.json();",
-                      "    pm.expect(body.role).to.eql(\"REPARTIDOR\");",
+                      "    pm.expect(body.role).to.eql(\"CLIENTE\");",
                       "});"
                     ]
                   }
@@ -1367,7 +1276,7 @@
               ]
             },
             {
-              "name": "REPARTIDOR sin repartidorId -> 422",
+              "name": "S4-14: pedir rol ADMIN crea un CLIENTE -> 201",
               "request": {
                 "method": "POST",
                 "header": [
@@ -1391,7 +1300,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"sinid.{{sufijo}}\",\n  \"email\": \"sinid.{{sufijo}}@logitrack.test\",\n  \"password\": \"repartidor123\",\n  \"rol\": \"REPARTIDOR\"\n}",
+                  "raw": "{\n  \"username\": \"admin.{{sufijo}}\",\n  \"email\": \"admin.{{sufijo}}@logitrack.test\",\n  \"password\": \"admin12345\",\n  \"rol\": \"ADMIN\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -1415,7 +1324,11 @@
                   "script": {
                     "type": "text/javascript",
                     "exec": [
-                      "pm.test(\"Responde 422\", function () { pm.response.to.have.status(422); });"
+                      "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"El registro público no da ADMIN\", function () {",
+                      "    const body = pm.response.json();",
+                      "    pm.expect(body.role).to.eql(\"CLIENTE\");",
+                      "});"
                     ]
                   }
                 }
@@ -1865,7 +1778,7 @@
           "name": "Estado y disponibilidad",
           "item": [
             {
-              "name": "Disponibilidad de Lucía (ACTIVA) -> disponible",
+              "name": "Disponibilidad de Brian (ACTIVA) -> disponible",
               "request": {
                 "method": "GET",
                 "header": [
@@ -1876,7 +1789,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{courier_url}}/api/v1/repartidores/{{lucia_id}}/disponibilidad",
+                  "raw": "{{courier_url}}/api/v1/repartidores/{{brian_id}}/disponibilidad",
                   "host": [
                     "{{courier_url}}"
                   ],
@@ -1884,7 +1797,7 @@
                     "api",
                     "v1",
                     "repartidores",
-                    "{{lucia_id}}",
+                    "{{brian_id}}",
                     "disponibilidad"
                   ]
                 },
@@ -2227,7 +2140,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{courier_url}}/api/v1/repartidores/{{lucia_id}}/estado",
+                  "raw": "{{courier_url}}/api/v1/repartidores/{{brian_id}}/estado",
                   "host": [
                     "{{courier_url}}"
                   ],
@@ -2235,7 +2148,7 @@
                     "api",
                     "v1",
                     "repartidores",
-                    "{{lucia_id}}",
+                    "{{brian_id}}",
                     "estado"
                   ]
                 },
@@ -2724,7 +2637,7 @@
               ]
             },
             {
-              "name": "6. Asignar a Lucía (consulta a courier-service con OpenFeign)",
+              "name": "6. Asignar a Brian (consulta a courier-service con OpenFeign)",
               "request": {
                 "method": "PUT",
                 "header": [
@@ -2755,7 +2668,7 @@
                 "description": "shipment-service llama a `GET /repartidores/{id}/disponibilidad` de courier-service y solo asigna si está disponible.",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
+                  "raw": "{\n  \"repartidorId\": \"{{brian_id}}\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2773,7 +2686,7 @@
                       "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
                       "pm.test(\"Devuelve la asignación\", function () {",
                       "    const body = pm.response.json();",
-                      "    pm.expect(body.repartidorId).to.eql(pm.environment.get(\"lucia_id\"));",
+                      "    pm.expect(body.repartidorId).to.eql(pm.environment.get(\"brian_id\"));",
                       "});"
                     ]
                   }
@@ -3026,7 +2939,7 @@
               ]
             },
             {
-              "name": "12. Hoja de ruta de Lucía (filtros combinados)",
+              "name": "12. Hoja de ruta de Brian (filtros combinados)",
               "request": {
                 "method": "GET",
                 "header": [
@@ -3037,7 +2950,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{shipment_url}}/api/v1/envios?repartidorId={{lucia_id}}&estado=ENTREGADO",
+                  "raw": "{{shipment_url}}/api/v1/envios?repartidorId={{brian_id}}&estado=ENTREGADO",
                   "host": [
                     "{{shipment_url}}"
                   ],
@@ -3049,7 +2962,7 @@
                   "query": [
                     {
                       "key": "repartidorId",
-                      "value": "{{lucia_id}}"
+                      "value": "{{brian_id}}"
                     },
                     {
                       "key": "estado",
@@ -3066,9 +2979,9 @@
                     "type": "text/javascript",
                     "exec": [
                       "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
-                      "pm.test(\"Todos los envíos son de Lucía\", function () {",
+                      "pm.test(\"Todos los envíos son de Brian\", function () {",
                       "    const body = pm.response.json();",
-                      "    body.forEach(e => pm.expect(e.repartidorId).to.eql(pm.environment.get(\"lucia_id\")));",
+                      "    body.forEach(e => pm.expect(e.repartidorId).to.eql(pm.environment.get(\"brian_id\")));",
                       "});"
                     ]
                   }
@@ -3240,7 +3153,7 @@
               ]
             },
             {
-              "name": "1. Asignar un repartidor ACTIVO (Lucía) -> 200",
+              "name": "1. Asignar un repartidor ACTIVO (Brian) -> 200",
               "request": {
                 "method": "PUT",
                 "header": [
@@ -3270,7 +3183,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
+                  "raw": "{\n  \"repartidorId\": \"{{brian_id}}\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -3482,7 +3395,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
+                  "raw": "{\n  \"repartidorId\": \"{{brian_id}}\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -3534,7 +3447,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
+                  "raw": "{\n  \"repartidorId\": \"{{brian_id}}\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -3645,7 +3558,7 @@
                 "description": "**Correr solo con courier-service detenido** (`docker compose stop courier-service`) y después levantarlo (`docker compose start courier-service`). La petición entra por el gateway; shipment-service no logra consultar a courier-service y responde 503 (no 500) gracias al ErrorDecoder, el fallback y el circuit breaker.",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
+                  "raw": "{\n  \"repartidorId\": \"{{brian_id}}\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -4263,7 +4176,7 @@
           "name": "Repartidor",
           "item": [
             {
-              "name": "1. El ADMIN asigna a Lucía el envío de B -> 200",
+              "name": "1. El ADMIN asigna a Brian el envío de B -> 200",
               "request": {
                 "method": "PUT",
                 "header": [
@@ -4293,7 +4206,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"repartidorId\": \"{{lucia_id}}\"\n}",
+                  "raw": "{\n  \"repartidorId\": \"{{brian_id}}\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -4315,7 +4228,7 @@
               ]
             },
             {
-              "name": "2. Lucía ve el envío asignado -> 200",
+              "name": "2. Brian ve el envío asignado -> 200",
               "request": {
                 "method": "GET",
                 "header": [
@@ -4352,7 +4265,7 @@
               ]
             },
             {
-              "name": "3. Lucía lista: solo su hoja de ruta -> 200",
+              "name": "3. Brian lista: solo su hoja de ruta -> 200",
               "request": {
                 "method": "GET",
                 "header": [
@@ -4382,9 +4295,9 @@
                     "type": "text/javascript",
                     "exec": [
                       "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
-                      "pm.test(\"Todos están asignados a Lucía\", function () {",
+                      "pm.test(\"Todos están asignados a Brian\", function () {",
                       "    const body = pm.response.json();",
-                      "    body.forEach(e => pm.expect(e.repartidorId).to.eql(pm.environment.get(\"lucia_id\")));",
+                      "    body.forEach(e => pm.expect(e.repartidorId).to.eql(pm.environment.get(\"brian_id\")));",
                       "});"
                     ]
                   }
@@ -4392,7 +4305,7 @@
               ]
             },
             {
-              "name": "4. Lucía pide la hoja de ruta de otro repartidor -> 403",
+              "name": "4. Brian pide la hoja de ruta de otro repartidor -> 403",
               "request": {
                 "method": "GET",
                 "header": [
@@ -4434,7 +4347,7 @@
               ]
             },
             {
-              "name": "5. Lucía pasa su envío a EN_RUTA -> 200",
+              "name": "5. Brian pasa su envío a EN_RUTA -> 200",
               "request": {
                 "method": "PATCH",
                 "header": [
@@ -4524,7 +4437,7 @@
               ]
             },
             {
-              "name": "7. Lucía intenta cambiar un envío que no es suyo -> 403",
+              "name": "7. Brian intenta cambiar un envío que no es suyo -> 403",
               "request": {
                 "method": "PATCH",
                 "header": [
@@ -4950,7 +4863,7 @@
           ]
         },
         {
-          "name": "E3. Registrar el usuario REPARTIDOR vinculado a ese repartidor",
+          "name": "E3. Login del REPARTIDOR de demo (gw.repartidor, Brian Abalos)",
           "request": {
             "method": "POST",
             "header": [
@@ -4961,7 +4874,7 @@
               }
             ],
             "url": {
-              "raw": "{{security_url}}/api/v1/auth/register",
+              "raw": "{{security_url}}/api/v1/auth/login",
               "host": [
                 "{{security_url}}"
               ],
@@ -4969,18 +4882,19 @@
                 "api",
                 "v1",
                 "auth",
-                "register"
+                "login"
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"repartidor.e2e.{{sufijo}}\",\n  \"email\": \"repartidor.e2e.{{sufijo}}@logitrack.test\",\n  \"password\": \"repartidor123\",\n  \"rol\": \"REPARTIDOR\",\n  \"repartidorId\": \"{{repartidorE2EId}}\"\n}",
+              "raw": "{\n  \"usernameOrEmail\": \"gw.repartidor\",\n  \"password\": \"{{admin_password}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            }
+            },
+            "description": "El registro público solo crea clientes (S4-14), así que el escenario usa el repartidor de demo y le asigna el envío a Brian."
           },
           "response": [],
           "event": [
@@ -4989,9 +4903,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Responde 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"Responde 200\", function () { pm.response.to.have.status(200); });",
                   "const body = pm.response.json();",
-                  "pm.environment.set(\"tokenE2ERepartidor\", body.token);"
+                  "pm.environment.set(\"tokenE2ERepartidor\", body.token);",
+                  "pm.environment.set(\"repartidorE2EId\", pm.environment.get(\"brian_id\"));"
                 ]
               }
             }
@@ -6132,7 +6047,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{gateway_url}}/api/v1/repartidores/{{lucia_id}}/estado",
+                  "raw": "{{gateway_url}}/api/v1/repartidores/{{brian_id}}/estado",
                   "host": [
                     "{{gateway_url}}"
                   ],
@@ -6140,7 +6055,7 @@
                     "api",
                     "v1",
                     "repartidores",
-                    "{{lucia_id}}",
+                    "{{brian_id}}",
                     "estado"
                   ]
                 },
@@ -6181,7 +6096,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{gateway_url}}/api/v1/repartidores/{{lucia_id}}",
+                  "raw": "{{gateway_url}}/api/v1/repartidores/{{brian_id}}",
                   "host": [
                     "{{gateway_url}}"
                   ],
@@ -6189,7 +6104,7 @@
                     "api",
                     "v1",
                     "repartidores",
-                    "{{lucia_id}}"
+                    "{{brian_id}}"
                   ]
                 },
                 "description": "`POST`, `PUT`, `PATCH` y `DELETE` sobre `/api/v1/repartidores/**` son solo de ADMIN."

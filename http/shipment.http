@@ -14,43 +14,28 @@
 @envioId = eeeeeeee-0000-4000-8000-000000000001
 @codigo = LT-2026-000001
 @envioPendiente = eeeeeeee-0000-4000-8000-000000000001
-@lucia = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e01
+@brian = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e01
 @martin = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e02
 @sofia = 3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e03
 
 ### ---------------------------------------------------------------------
-### 0. AUTENTICACIÓN (correr una de las dos)
+### 0. AUTENTICACIÓN
 ### ---------------------------------------------------------------------
 
-### 0.1. Registro inicial de un ADMIN (la primera vez) -> 201
-POST {{security}}/api/v1/auth/register
+### 0.1. Login del ADMIN de demo (security-service lo crea al arrancar, S4-14) -> 200
+POST {{security}}/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "username": "admin.demo",
-  "email": "admin.demo@logitrack.test",
-  "password": "admin123",
-  "rol": "ADMIN"
+  "usernameOrEmail": "gw.admin",
+  "password": "gateway123"
 }
 
 > {%
     client.global.set("token", response.body.token);
     client.test("Token guardado", function () {
-        client.assert(response.status === 201, "Se esperaba 201; si dio 409 usar el request 0.2");
+        client.assert(response.status === 200, "Se esperaba 200; revisar USUARIOS_DEMO_PASSWORD en el .env");
     });
-%}
-
-### 0.2. Login (usar cuando el usuario ya está registrado) -> 200
-POST {{security}}/api/v1/auth/login
-Content-Type: application/json
-
-{
-  "usernameOrEmail": "admin.demo",
-  "password": "admin123"
-}
-
-> {%
-    client.global.set("token", response.body.token);
 %}
 
 ### ---------------------------------------------------------------------
@@ -93,7 +78,7 @@ GET {{host}}/api/v1/envios?estado=PENDIENTE
 Authorization: Bearer {{token}}
 
 ### 1.5. Hoja de ruta de un repartidor (filtros combinables) -> 200
-GET {{host}}/api/v1/envios?repartidorId={{lucia}}&estado=EN_RUTA
+GET {{host}}/api/v1/envios?repartidorId={{brian}}&estado=EN_RUTA
 Authorization: Bearer {{token}}
 
 ### 1.6. Pasar a EN_RUTA sin repartidor asignado -> 422
@@ -103,13 +88,13 @@ Content-Type: application/json
 
 { "estado": "EN_RUTA" }
 
-### 1.7. Asignar un repartidor ACTIVO (Lucía, vive en courier-service) -> 200
+### 1.7. Asignar un repartidor ACTIVO (Brian Abalos, vive en courier-service) -> 200
 ### Acá shipment-service llama a courier-service por OpenFeign. Si está caído, responde 503.
 PUT {{host}}/api/v1/envios/{{envioId}}/repartidor
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "repartidorId": "{{lucia}}" }
+{ "repartidorId": "{{brian}}" }
 
 ### 1.8. Pasar a EN_RUTA -> 200
 PATCH {{host}}/api/v1/envios/{{envioId}}/estado
@@ -154,7 +139,7 @@ PUT {{host}}/api/v1/envios/{{envioPendiente}}/repartidor
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "repartidorId": "{{lucia}}" }
+{ "repartidorId": "{{brian}}" }
 
 ### 2.2. Reasignar el envío PENDIENTE a otro repartidor ACTIVO -> 200
 PUT {{host}}/api/v1/envios/{{envioPendiente}}/repartidor
@@ -182,14 +167,14 @@ PUT {{host}}/api/v1/envios/eeeeeeee-0000-4000-8000-000000000005/repartidor
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "repartidorId": "{{lucia}}" }
+{ "repartidorId": "{{brian}}" }
 
 ### 2.6. Asignar a un envío inexistente -> 404
 PUT {{host}}/api/v1/envios/00000000-0000-0000-0000-000000000000/repartidor
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "repartidorId": "{{lucia}}" }
+{ "repartidorId": "{{brian}}" }
 
 ### 2.7. Asignar un repartidor que courier-service no conoce -> 404
 PUT {{host}}/api/v1/envios/{{envioPendiente}}/repartidor
@@ -205,7 +190,7 @@ PUT {{host}}/api/v1/envios/{{envioPendiente}}/repartidor
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
-{ "repartidorId": "{{lucia}}" }
+{ "repartidorId": "{{brian}}" }
 
 ### ---------------------------------------------------------------------
 ### 3. CASOS DE ERROR
