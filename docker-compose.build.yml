@@ -41,3 +41,7 @@ services:
   api-gateway:
     build:
       context: ../api-gateway
+
+  logitrack-frontend:
+    build:
+      context: ../frontend/logitrack-frontend

@@ -1,7 +1,7 @@
 # LogiTrack · infraestructura
 
 Repositorio que **levanta todo el sistema LogiTrack** (Desarrollo y Arquitecturas Avanzadas de Software, FI UNJu
-2026): los seis servicios y sus tres bases MySQL, con Docker Compose.
+2026): los seis servicios, el frontend y las tres bases MySQL, con Docker Compose.
 
 ## Repositorios del proyecto
 
@@ -13,6 +13,7 @@ Repositorio que **levanta todo el sistema LogiTrack** (Desarrollo y Arquitectura
 | `security-service` | 8083 (solo red interna) | Usuarios, login (BCrypt) y emisión de JWT (HS256) |
 | `courier-service` | 8082 (solo red interna) | Gestión de repartidores y su disponibilidad |
 | `shipment-service` | 8081 (solo red interna) | Envíos; consulta a courier-service con OpenFeign (resuelto por Eureka) para asignar repartidores |
+| `frontend` | 3000 | **Cliente web** (React servido por Nginx): http://localhost:3000. Le pasa `/api` al gateway por la red interna |
 | `logitrack-config` | — | Archivos `.yml` por servicio y ambiente (lo lee el config-server) |
 | **`infra`** (este) | — | `docker-compose`, scripts de base de datos y requests de prueba |
 
@@ -81,7 +82,8 @@ docker compose up -d
 docker compose ps
 ```
 
-En 2 o 3 minutos tienen que aparecer los 9 contenedores en `healthy`.
+En 2 o 3 minutos tienen que aparecer los 10 contenedores en `healthy`. Después se abre la app en
+**http://localhost:3000**.
 
 ### Orden de arranque y puertos
 
@@ -92,8 +94,11 @@ Docker Compose espera a que cada uno quede `healthy` antes de arrancar el siguie
 2. `eureka-server` (8065)
 3. `security-service`, `courier-service` y `shipment-service`, cada uno con su base
 4. `api-gateway` (8066)
+5. `logitrack-frontend` (3000)
 
-Desde la PC **solo se entra por el gateway**: `http://localhost:8066`. Los servicios security, courier y
+La app web está en `http://localhost:3000`: su Nginx le pasa `/api/...` al gateway por la red interna, así que
+el navegador siempre le habla al mismo origen. Para la API, desde la PC **solo se entra por el gateway**:
+`http://localhost:8066`. Los servicios security, courier y
 shipment no publican puertos; el gateway los encuentra en Eureka por su nombre (`lb://SHIPMENT-SERVICE`,
 etc.). También quedan publicados el panel de Eureka (8065), el config-server (8888) y las bases MySQL
 (3307-3309), que se usan para correr los servicios desde el IDE.
@@ -126,6 +131,7 @@ ProyectoFinalDAAS/
 ├── config-server/
 ├── eureka-server/
 ├── api-gateway/
+├── frontend/
 ├── security-service/
 ├── courier-service/
 └── shipment-service/
@@ -151,6 +157,12 @@ nada. La `1.0.0` (Sprint 2) sigue publicada y no se modificó.
 | [`macostag26/logitrack-courier-service:3.0.0`](https://hub.docker.com/r/macostag26/logitrack-courier-service) | `docker pull macostag26/logitrack-courier-service:3.0.0` |
 | [`macostag26/logitrack-shipment-service:3.0.0`](https://hub.docker.com/r/macostag26/logitrack-shipment-service) | `docker pull macostag26/logitrack-shipment-service:3.0.0` |
 
+El frontend se publica con su propia versión (`FRONTEND_TAG` en el `.env`):
+
+| Imagen | Descarga |
+|---|---|
+| [`macostag26/logitrack-frontend:1.0.0`](https://hub.docker.com/r/macostag26/logitrack-frontend) | `docker pull macostag26/logitrack-frontend:1.0.0` |
+
 Los repositorios de Docker Hub son públicos: se descargan sin `docker login`.
 
 ## Publicar una versión nueva en Docker Hub
@@ -166,6 +178,7 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml push
 
 ## Probar que funciona
 
+- App web: http://localhost:3000 (login, envíos y repartidores, según el rol)
 - Panel de Eureka: http://localhost:8065 (tienen que aparecer `API-GATEWAY`, `SECURITY-SERVICE`,
   `COURIER-SERVICE` y `SHIPMENT-SERVICE` en `UP`)
 - Health del gateway: http://localhost:8066/actuator/health (también 8065 y 8888)
@@ -210,6 +223,6 @@ docker compose down -v     # además borra las bases (se recrean con los scripts
 | `Falta DB_PASSWORD` / `Falta JWT_SECRET` | No existe el `.env` o está incompleto |
 | `security-service` (o cualquier servicio) se reinicia | `JWT_SECRET` con menos de 32 caracteres. Ver `docker compose logs security-service` |
 | `config-server` no queda `healthy` | No llega a GitHub para clonar `logitrack-config`, o el repo es privado |
-| Puertos ocupados (8066, 8065, 8888, 3307-3309) | Frenar lo que los usa, por ejemplo servicios corriendo desde el IDE |
+| Puertos ocupados (3000, 8066, 8065, 8888, 3307-3309) | Frenar lo que los usa, por ejemplo servicios corriendo desde el IDE |
 | El gateway responde 503 justo después de levantar | Los servicios todavía no aparecen en Eureka: esperar unos 30 segundos |
 | Datos viejos o esquema desactualizado | `docker compose down -v` y volver a levantar |

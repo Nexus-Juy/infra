@@ -93,7 +93,7 @@ INSERT INTO clientes (id, nombre, email, telefono, version, created_at, updated_
 -- Envíos de prueba para demo (el repartidor_id apunta a logitrack_couriers)
 -- 0001: PENDIENTE sin repartidor (asignación exitosa)
 -- 0002: PENDIENTE sin repartidor (rechazo de repartidor inactivo)
--- 0003: EN_RUTA con Lucía Fernández
+-- 0003: EN_RUTA con Brian Abalos
 -- 0004: ENTREGADO
 -- 0005: CANCELADO
 -- ---------------------------------------------------------------------
