@@ -33,6 +33,6 @@ CREATE TABLE IF NOT EXISTS repartidores (
 -- Datos de prueba (mismos UUID que usa shipment-service para los envíos)
 -- ---------------------------------------------------------------------
 INSERT INTO repartidores (id, nombre, tipo_vehiculo, email, telefono, estado, version, created_at, updated_at) VALUES
-    ('3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e01', 'Lucía Fernández', 'MOTO',      'lucia.fernandez@logitrack.com', '+54 388 400-2001', 'ACTIVO',   0, NOW(6), NOW(6)),
+    ('3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e01', 'Brian Abalos',    'MOTO',      'brian.abalos@logitrack.com',    '+54 388 400-2001', 'ACTIVO',   0, NOW(6), NOW(6)),
     ('3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e02', 'Martín Quispe',   'CAMIONETA', 'martin.quispe@logitrack.com',   '+54 388 400-2002', 'ACTIVO',   0, NOW(6), NOW(6)),
     ('3f6c1a52-8e0b-4d7a-9c11-0a1b2c3d4e03', 'Sofía Mamaní',    'BICICLETA', 'sofia.mamani@logitrack.com',    '+54 388 400-2003', 'INACTIVO', 0, NOW(6), NOW(6));

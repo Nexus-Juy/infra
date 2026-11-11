@@ -1,7 +1,7 @@
 # =====================================================================
 # LogiTrack · entorno completo (infraestructura)
 #
-# Levanta los 6 servicios y sus 3 bases MySQL usando las imágenes publicadas en Docker Hub:
+# Levanta los 6 servicios, el frontend y las 3 bases MySQL usando las imágenes publicadas en Docker Hub:
 #   docker compose up -d
 #
 # Para construir las imágenes desde el código de cada repositorio, en lugar de descargarlas
@@ -12,8 +12,10 @@
 #
 # Orden de arranque (S3-09), con depends_on y condition: service_healthy:
 #   config-server -> eureka-server -> security, courier y shipment (con sus bases) -> api-gateway
+#   -> logitrack-frontend (S4-10)
 #
-# Desde la PC solo se entra por el api-gateway (8066). También quedan publicados el panel de
+# La app web se abre en http://localhost:3000 (logitrack-frontend); su Nginx le pasa /api al gateway.
+# Para la API, desde la PC solo se entra por el api-gateway (8066). También quedan publicados el panel de
 # Eureka (8065), el config-server (8888) y las bases (3307-3309, para correr los servicios desde el IDE).
 # security, courier y shipment ya no publican 8081-8083: solo se llega a ellos por el gateway.
 # Entre contenedores no se usa localhost: cada servicio se encuentra por su nombre
@@ -203,6 +205,25 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
     ports:
       - "8066:8066"
+
+  # ---------------------------------------------------------------- frontend (S4-10)
+
+  # Cliente web: Nginx sirve la SPA y le pasa /api al api-gateway por la red interna.
+  # El navegador entra por http://localhost:3000 y nunca le habla directo a los servicios.
+  logitrack-frontend:
+    image: ${DOCKERHUB_USER:-logitrack}/logitrack-frontend:${FRONTEND_TAG:-1.0.0}
+    container_name: logitrack-frontend
+    restart: on-failure
+    mem_limit: 128m
+    networks:
+      - logitrack-net
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    environment:
+      GATEWAY_URL: http://api-gateway:8066
+    ports:
+      - "3000:80"
 
 networks:
   logitrack-net:
