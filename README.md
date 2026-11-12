@@ -96,7 +96,7 @@ security-service los crea solo al arrancar (S4-14), si no existen. La contraseñ
 | Usuario | Rol | Qué puede hacer en la app |
 |---|---|---|
 | `gw.admin` | ADMIN | Ve todos los envíos; registra, asigna repartidor, cambia el estado y cancela. Da de alta, edita y activa o desactiva repartidores |
-| `gw.cliente` | CLIENTE | Ve solo sus envíos; registra envíos nuevos, les asigna repartidor y los cancela mientras están pendientes |
+| `gw.cliente` | CLIENTE | Su interfaz es solo de envíos: ve los suyos, registra nuevos, les asigna repartidor y los cancela mientras están pendientes |
 | `gw.repartidor` | REPARTIDOR | Vinculado al repartidor **Brian Abalos**. Ve su hoja de ruta y pasa sus envíos a "En ruta" y a "Entregado" |
 
 Desde la pantalla de login, "Crear una cuenta de cliente" registra usuarios nuevos. El registro público
@@ -126,7 +126,7 @@ etc.). También quedan publicados el panel de Eureka (8065), el config-server (8
 | Variable | Qué poner |
 |---|---|
 | `DOCKERHUB_USER` / `IMAGE_TAG` | Usuario de Docker Hub (`macostag26`) y versión de las imágenes (`4.0.0`) |
-| `FRONTEND_TAG` | Versión de la imagen del frontend (`1.0.0`) |
+| `FRONTEND_TAG` | Versión de la imagen del frontend (`1.1.0`) |
 | `DB_USER` / `DB_PASSWORD` / `MYSQL_ROOT_PASSWORD` | Credenciales de MySQL (las que quieran) |
 | `JWT_SECRET` | Obligatoria, **mínimo 32 caracteres**. La usan security-service y el api-gateway (y los servicios). Generar con `openssl rand -base64 48` |
 | `USUARIOS_DEMO_PASSWORD` | Contraseña de los [usuarios de prueba](#usuarios-de-prueba-por-rol). Vacía: no se crean |
@@ -183,7 +183,9 @@ El frontend se publica con su propia versión (`FRONTEND_TAG` en el `.env`):
 
 | Imagen | Descarga |
 |---|---|
-| [`macostag26/logitrack-frontend:1.0.0`](https://hub.docker.com/r/macostag26/logitrack-frontend) | `docker pull macostag26/logitrack-frontend:1.0.0` |
+| [`macostag26/logitrack-frontend:1.1.0`](https://hub.docker.com/r/macostag26/logitrack-frontend) | `docker pull macostag26/logitrack-frontend:1.1.0` |
+
+La `1.1.0` deja al CLIENTE solo con la pantalla de sus envíos (sin Repartidores). La `1.0.0` sigue publicada.
 
 Los repositorios de Docker Hub son públicos: se descargan sin `docker login`.
 

@@ -213,7 +213,7 @@ services:
   # Cliente web: Nginx sirve la SPA y le pasa /api al api-gateway por la red interna.
   # El navegador entra por http://localhost:3000 y nunca le habla directo a los servicios.
   logitrack-frontend:
-    image: ${DOCKERHUB_USER:-logitrack}/logitrack-frontend:${FRONTEND_TAG:-1.0.0}
+    image: ${DOCKERHUB_USER:-logitrack}/logitrack-frontend:${FRONTEND_TAG:-1.1.0}
     container_name: logitrack-frontend
     restart: on-failure
     mem_limit: 128m
